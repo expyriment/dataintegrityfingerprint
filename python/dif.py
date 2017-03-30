@@ -42,7 +42,7 @@ class DataIntegrityFingerprint:
             self._file_hashes = collections.OrderedDict()
             with codecs.open(data, encoding="utf-8") as f:
                 for line in f:
-                    length = hashlib.new(self._hash_algorithm).digestsize * 2
+                    length = hashlib.new(self._hash_algorithm).digest_size * 2
                     hash_ = line[:length]
                     dir_ = line[length:].lstrip()
                     self._data = dir_.split(os.path.sep)[0]
