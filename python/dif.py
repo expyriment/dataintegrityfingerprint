@@ -35,7 +35,6 @@ class DataIntegrityFingerprint:
         self._hash_algorithm = hash_algorithm
         self._data = os.path.abspath(data)
         self._file_hashes = collections.OrderedDict()
-        self._master_hash = None
         if os.path.isfile(data):
             self._file_hashes[data] = None
         else:
@@ -48,7 +47,7 @@ class DataIntegrityFingerprint:
                     self._file_hashes[filename] = None
 
     def __str__(self):
-        return str(self._master_hash)
+        return str(self.master_hash)
 
     @property
     def data(self):
@@ -57,6 +56,22 @@ class DataIntegrityFingerprint:
     @property
     def file_hashes(self):
         return self._file_hashes
+
+    @property
+    def master_hash(self):
+        """DOCU"""
+
+        if self._file_hashes is None:
+            return None
+
+        file_hashes = sorted(self._file_hashes.values())
+        if len(file_hashes) > 1:
+            hasher = hashlib.new(self._hash_algorithm)
+            for file_hash in file_hashes:
+                hasher.update(file_hash.encode("ascii"))
+            return hasher.hexdigest()
+        else:
+            return self._file_hashes[self._file_hashes.keys()[0]]
 
     def generate(self, progress=None):
         """Calculate the fingerprint.
@@ -87,14 +102,6 @@ class DataIntegrityFingerprint:
         else:
             rtn = _hash_file(self._file_hashes.keys()[0])
             self._file_hashes[rtn[0]] = rtn[1]
-        file_hashes = sorted(self._file_hashes.values())
-        if len(file_hashes) > 1:
-            hasher = hashlib.new(self._hash_algorithm)
-            for file_hash in file_hashes:
-                hasher.update(file_hash.encode("ascii"))
-            self._master_hash = hasher.hexdigest()
-        else:
-            self._master_hash = self._file_hashes[self._file_hashes.keys()[0]]
 
 def _hash_file(filename, hash_algorithm):
     hasher = hashlib.new(hash_algorithm)
