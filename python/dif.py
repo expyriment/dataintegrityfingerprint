@@ -33,8 +33,9 @@ class DataIntegrityFingerprint:
 
         """
 
-        if hash_algorithm not in hashlib.algorithms_available:
-            raise ValueError('unsupported hash type ' + name)
+        if hash_algorithm not in hashlib.algorithms_guaranteed:
+            raise ValueError("Hash algorithm '{0}' not supported.".format(
+                hash_algorithm))
 
         self._hash_algorithm = hash_algorithm
         self._data = os.path.abspath(data)
@@ -51,7 +52,7 @@ class DataIntegrityFingerprint:
                     self._file_hashes[filename] = None
 
     def __str__(self):
-        return str(self.master_hash)
+        return str(self._master_hash)
 
     @property
     def data(self):
@@ -62,7 +63,7 @@ class DataIntegrityFingerprint:
         return self._file_hashes
 
     @property
-    def master_hash(self):
+    def _master_hash(self):
         """DOCU"""
 
         if self._file_hashes is None:
@@ -193,4 +194,3 @@ if __name__ == "__main__":
             print("Checksums have been written to '{0}'.".format(outfile))
         else:
             print("Checksums have NOT been written.".format(outfile))
-
