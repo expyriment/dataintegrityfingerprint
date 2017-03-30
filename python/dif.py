@@ -29,8 +29,9 @@ class DataIntegrityFingerprint:
 
         """
 
-        if hash_algorithm not in hashlib.algorithms:
-            raise ValueError('unsupported hash type ' + name)
+        if hash_algorithm not in hashlib.algorithms_guaranteed:
+            raise ValueError("Hash algorithm '{0}' not supported.".format(
+                hash_algorithm))
 
         self._hash_algorithm = hash_algorithm
         self._data = os.path.abspath(data)
