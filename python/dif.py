@@ -4,7 +4,7 @@ import sys
 import hashlib
 import collections
 import multiprocessing
-
+from functools import partial
 
 class DataIntegrityFingerprint:
     """A class representing a DataIntegrityFingerprint (DIF).
@@ -17,16 +17,22 @@ class DataIntegrityFingerprint:
 
     """
 
-    def __init__(self, data):
+    def __init__(self, data, hash_algorithm="sha256"):
         """Create a DataIntegrityFingerprint object.
 
         Parameters
         ----------
         data : str
             the path to the data
+        hash_algorithm : str
+            the hash algorithm (optional, default: sha256)
 
         """
 
+        if hash_algorithm not in hashlib.algorithms:
+            raise ValueError('unsupported hash type ' + name)
+
+        self._hash_algorithm = hash_algorithm
         self._data = os.path.abspath(data)
         self._file_hashes = collections.OrderedDict()
         self._master_hash = None
@@ -69,8 +75,9 @@ class DataIntegrityFingerprint:
         if len(self._file_hashes) > 1:
             tmp = [os.path.join(self._data, filename) for \
                    filename in self._file_hashes.keys()]
+            func = partial(_hash_file, hash_algorithm = self._hash_algorithm)
             for counter, rtn in enumerate(
-                    multiprocessing.Pool().imap_unordered(_hash_file, tmp)):
+                    multiprocessing.Pool().imap_unordered(func, tmp)):
                 if progress is not None:
                     progress(counter + 1, len(self._file_hashes),
                              "{0}/{1} files".format(counter + 1,
@@ -82,19 +89,19 @@ class DataIntegrityFingerprint:
             self._file_hashes[rtn[0]] = rtn[1]
         file_hashes = sorted(self._file_hashes.values())
         if len(file_hashes) > 1:
-            sha256 = hashlib.sha256()
+            hasher = hashlib.new(self._hash_algorithm)
             for file_hash in file_hashes:
-                sha256.update(file_hash.encode("ascii"))
-            self._master_hash = sha256.hexdigest()
+                hasher.update(file_hash.encode("ascii"))
+            self._master_hash = hasher.hexdigest()
         else:
             self._master_hash = self._file_hashes[self._file_hashes.keys()[0]]
 
-def _hash_file(filename):
-    sha256 = hashlib.sha256()
+def _hash_file(filename, hash_algorithm):
+    hasher = hashlib.new(hash_algorithm)
     with open(filename, 'rb') as f:
         for block in iter(lambda: f.read(64*1024), b''):
-            sha256.update(block)
-    return filename, sha256.hexdigest()
+            hasher.update(block)
+    return filename, hasher.hexdigest()
 
 
 if __name__ == "__main__":
@@ -127,7 +134,7 @@ if __name__ == "__main__":
         sys.stdout.write('{:5.1f}% [{}] {}\r'.format(percents, bar, status))
         sys.stdout.flush()
 
-    dif = DataIntegrityFingerprint(args["PATH"])
+    dif = DataIntegrityFingerprint(args["PATH"], hash_algorithm="sha256")
     dif.generate(progress=progress)
     print("\nDIF: {0}".format(dif))
 
