@@ -47,7 +47,7 @@ class DataIntegrityFingerprint:
                     self._file_hashes[filename] = None
 
     def __str__(self):
-        return str(self.master_hash)
+        return str(self._master_hash)
 
     @property
     def data(self):
@@ -58,7 +58,7 @@ class DataIntegrityFingerprint:
         return self._file_hashes
 
     @property
-    def master_hash(self):
+    def _master_hash(self):
         """DOCU"""
 
         if self._file_hashes is None:
