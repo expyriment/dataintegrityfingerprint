@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
     import argparse
     parser = argparse.ArgumentParser(
-            description="Create a Data Integrity Fingerprint (DFI).",
+            description="Create a Data Integrity Fingerprint (DIF).",
             epilog="(c) F. Krause")
     parser.add_argument("PATH", nargs='?', default=None,
                         help="the path to the data folder or file")
