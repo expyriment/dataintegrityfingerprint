@@ -83,7 +83,7 @@ class DataIntegrityFingerprint:
                 hasher.update(file_hash.encode("ascii"))
             return hasher.hexdigest()
         else:
-            return self._file_hashes[self._file_hashes.keys()[0]]
+            return self._file_hashes[list(self._file_hashes.keys())[0]]
 
     def generate(self, progress=None):
         """Calculate the fingerprint.
@@ -112,7 +112,8 @@ class DataIntegrityFingerprint:
                 self._file_hashes[rtn[0].replace(
                     self._data + os.path.sep, "")] = rtn[1]
         else:
-            rtn = _hash_file(self._file_hashes.keys()[0])
+            rtn = _hash_file(list(self._file_hashes.keys())[0],
+                        hash_algorithm = self._hash_algorithm)
             self._file_hashes[rtn[0]] = rtn[1]
 
 
