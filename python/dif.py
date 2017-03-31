@@ -48,7 +48,6 @@ class DataIntegrityFingerprint:
                     self._data = dir_.split(os.path.sep)[0]
                     root = os.path.split(self._data)[-1] + os.path.sep
                     self._file_hashes[dir_.replace(root, "")] = hash_
-            self._generated = True
         else:
             self._data = os.path.abspath(data)
             if os.path.isfile(data):
@@ -61,7 +60,6 @@ class DataIntegrityFingerprint:
                         if filename.startswith("./"):
                             filename = filename[2:]
                         self._file_hashes[filename] = None
-            self._generated = False
 
     def __str__(self):
         return str(self._master_hash)
@@ -76,7 +74,7 @@ class DataIntegrityFingerprint:
 
     @property
     def _master_hash(self):
-        if not self._generated:
+        if len(self._file_hashes)<1:
             return None
         file_hashes = sorted(self._file_hashes.values())
         if len(file_hashes) > 1:
@@ -116,7 +114,6 @@ class DataIntegrityFingerprint:
         else:
             rtn = _hash_file(self._file_hashes.keys()[0])
             self._file_hashes[rtn[0]] = rtn[1]
-        self._generated = True
 
 
 def _hash_file(filename, hash_algorithm):
