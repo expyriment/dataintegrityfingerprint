@@ -3,11 +3,12 @@ import os
 import sys
 import codecs
 import hashlib
+import posixpath
 import collections
 import multiprocessing
 from functools import partial
 
-
+     
 class DataIntegrityFingerprint:
     """A class representing a DataIntegrityFingerprint (DIF).
 
@@ -33,36 +34,29 @@ class DataIntegrityFingerprint:
 
         """
 
+        if from_checksum_file:
+            assert os.path.isdir(data)
+
         if hash_algorithm not in hashlib.algorithms_guaranteed:
             raise ValueError("Hash algorithm '{0}' not supported.".format(
                 hash_algorithm))
+
+        self._data = os.path.abspath(data).strip(os.path.sep)
         self._hash_algorithm = hash_algorithm
-        self._file_hashes = collections.OrderedDict()
+        self._files = []
+        self._file_hashes = {}
         if from_checksums_file:
-            self._file_hashes = collections.OrderedDict()
             with codecs.open(data, encoding="utf-8") as f:
                 for line in f:
                     length = hashlib.new(self._hash_algorithm).digest_size * 2
-                    hash_ = line[:length]
-                    dir_ = line[length:].lstrip()
-                    self._data = dir_.split(os.path.sep)[0]
-                    root = os.path.split(self._data)[-1] + os.path.sep
-                    self._file_hashes[dir_.replace(root, "")] = hash_
+                    self._file_hashes[line[:length]] = line[length:].strip()
         else:
-            self._data = os.path.abspath(data)
-            if os.path.isfile(data):
-                self._file_hashes[data] = None
-            else:
-                for dir_, _, files in os.walk(self._data):
-                    for filename in files:
-                        filename = os.path.join(os.path.relpath(dir_, self._data),
-                                                filename)
-                        if filename.startswith("./"):
-                            filename = filename[2:]
-                        self._file_hashes[filename] = None
+            for dir_, _, files in os.walk(self._data):
+                for filename in files:
+                    self._files.append(os.path.join(self._data, dir_, filename))
 
     def __str__(self):
-        return str(self._master_hash)
+        return str(self.master_hash)
 
     @property
     def data(self):
@@ -73,20 +67,18 @@ class DataIntegrityFingerprint:
         return self._file_hashes
 
     @property
-    def _master_hash(self):
+    def master_hash(self):
         if len(self._file_hashes)<1:
             return None
-        file_hashes = sorted(self._file_hashes.values())
-        if len(file_hashes) > 1:
-            hasher = hashlib.new(self._hash_algorithm)
-            for file_hash in file_hashes:
-                hasher.update(file_hash.encode("ascii"))
-            return hasher.hexdigest()
-        else:
-            return self._file_hashes[list(self._file_hashes.keys())[0]]
+        file_hashes = sorted(self._file_hashes.keys())
+        checksums_list = ["{0}  {1}".format(k, self._file_hashes[k]) for k in file_hashes]
+        self._checksums = "\n".join(checksums_list)
+        hasher = hashlib.new(self._hash_algorithm)
+        hasher.update(self._checksums.encode("utf-8"))
+        return hasher.hexdigest()
 
     def generate(self, progress=None):
-        """Calculate the fingerprint.
+        """Generate the Data Integrity Fingerprint.
 
         Parameters
         ----------
@@ -99,30 +91,36 @@ class DataIntegrityFingerprint:
 
         """
 
-        if len(self._file_hashes) > 1:
-            tmp = [os.path.join(self._data, filename) for \
-                   filename in self._file_hashes.keys()]
-            func = partial(_hash_file, hash_algorithm = self._hash_algorithm)
-            for counter, rtn in enumerate(
-                    multiprocessing.Pool().imap_unordered(func, tmp)):
-                if progress is not None:
-                    progress(counter + 1, len(self._file_hashes),
-                             "{0}/{1}".format(counter + 1,
-                                              len(self._file_hashes)))
-                self._file_hashes[rtn[0].replace(
-                    self._data + os.path.sep, "")] = rtn[1]
-        else:
-            rtn = _hash_file(list(self._file_hashes.keys())[0],
-                        hash_algorithm = self._hash_algorithm)
-            self._file_hashes[rtn[0]] = rtn[1]
+        func = partial(_hash_file, hash_algorithm = self._hash_algorithm)
+        for counter, rtn in enumerate(
+                multiprocessing.Pool().imap_unordered(func, self._files)):
+            if progress is not None:
+                progress(counter + 1, len(self._files),
+                         "{0}/{1}".format(counter + 1,
+                                          len(self._files)))
+            self._file_hashes[rtn[0]] = os.path.relpath(rtn[1],
+                    self._data).replace(os.path.sep, "/")
 
+    def save_checksums(self):
+        """Save the checksums to a file.
+
+        Returns True if successful.
+
+        """
+
+        if self.master_hash is not None:
+            filename = os.path.split(self._data)[-1] + ".{0}".format(self._hash_algorithm) 
+            with codecs.open(filename, 'w', "utf-8") as f:
+                f.write(self._checksums)
+            return True
+ 
 
 def _hash_file(filename, hash_algorithm):
     hasher = hashlib.new(hash_algorithm)
     with open(filename, 'rb') as f:
         for block in iter(lambda: f.read(64*1024), b''):
             hasher.update(block)
-    return filename, hasher.hexdigest()
+    return hasher.hexdigest(), filename
 
 
 if __name__ == "__main__":
@@ -168,16 +166,13 @@ if __name__ == "__main__":
     print("DIF: {0}".format(dif))
 
     if args['savechecksumsfile']:
-        outfile = os.path.split(dif.data)[-1] + ".sha256"
+        outfile = os.path.split(dif.data)[-1] + ".{0}".format(diff._hash_algorithm)
         answer = "y"
         if os.path.exists(outfile):
             answer = input(
                     "'{0}' already exists! Overwrite? [y/N]: ".format(outfile))
         if answer == "y":
-            with codecs.open(outfile, 'w', encoding="utf-8") as f:
-                for filename in dif.file_hashes:
-                    f.write(dif.file_hashes[filename] + "  " + os.path.join(
-                        os.path.split(dif._data)[-1], filename + "\n"))
+            diff.save_checksums()
             print("Checksums have been written to '{0}'.".format(outfile))
         else:
-            print("Checksums have NOT been written.".format(outfile))
+            print("Checksums have NOT been written.")
