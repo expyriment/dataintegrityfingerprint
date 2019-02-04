@@ -34,7 +34,7 @@ class DataIntegrityFingerprint:
 
         """
 
-        if from_checksum_file:
+        if not from_checksums_file:
             assert os.path.isdir(data)
 
         if hash_algorithm not in hashlib.algorithms_guaranteed:
@@ -71,8 +71,8 @@ class DataIntegrityFingerprint:
         if len(self._file_hashes)<1:
             return None
         file_hashes = sorted(self._file_hashes.keys())
-        checksums_list = ["{0}  {1}".format(k, self._file_hashes[k]) for k in file_hashes]
-        self._checksums = "\n".join(checksums_list)
+        checksums_list = ["{0}  {1}\n".format(k, self._file_hashes[k]) for k in file_hashes]
+        self._checksums = "".join(checksums_list)
         hasher = hashlib.new(self._hash_algorithm)
         hasher.update(self._checksums.encode("utf-8"))
         return hasher.hexdigest()
@@ -98,8 +98,8 @@ class DataIntegrityFingerprint:
                 progress(counter + 1, len(self._files),
                          "{0}/{1}".format(counter + 1,
                                           len(self._files)))
-            self._file_hashes[rtn[0]] = os.path.relpath(rtn[1],
-                    self._data).replace(os.path.sep, "/")
+            self._file_hashes[rtn[0]] = os.path.split(self.data)[-1] + "/" + \
+                    os.path.relpath(rtn[1], self._data).replace(os.path.sep, "/")
 
     def save_checksums(self):
         """Save the checksums to a file.
