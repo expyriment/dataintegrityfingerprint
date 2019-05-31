@@ -16,7 +16,7 @@ DIF procedure
        UTF-8 shall be replaced with a U+003F question mark character;
        `checksums` shall have no empty lines)
 
-2. Sort the lines in `checksums` in ascending Unicode code point order
+2. Sort the lines in `checksums` in ascending Unicode code point order (not Unicode collation algorithm!)
 
 3. Calculate the hexadecimal digest of the $FUNCTION hash of the sorted
    contents of 'checksums'
