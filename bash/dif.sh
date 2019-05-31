@@ -13,9 +13,7 @@ if [ "$1" = "-p" ]; then
 else
 	# find all files
 	# make hash list
-	# select only hashes
 	# sort them
-	# remove newlines
 	# create master hash
 	# print out only the master hash
 	find $1 -type f -print0 \
