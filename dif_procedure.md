@@ -21,8 +21,9 @@ DIF procedure
 3. Calculate the hexadecimal digest of the SHA-256 hash of the sorted
    contents of 'checksums'
 
-**NOTE**
+
+## NOTE
 On a Unix(-like) system with a UTF-8 locale, the procedure is equivalent to:
 ```
-find DATA -type f -print0 | xargs -0 shasum -a 256 | sort | shasum -a 256 | cut -d' ' -f1
-111
+find data -type f -print0 | xargs -0 shasum -a 256 | sort | shasum -a 256 | cut -d' ' -f1
+```
