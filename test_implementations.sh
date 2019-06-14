@@ -5,7 +5,8 @@
 
 echo "Bash"
 bash bash/dif.sh ${1}
+bash bash/dif.sh -c ${1} > checksums.bash
 
 echo "Python2"
-python2 -s python/dif.py ${1}
+python2 python/dif.py -s ${1}
 

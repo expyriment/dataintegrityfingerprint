@@ -4,12 +4,12 @@
 # Usage:
 #	dif.sh [-l] <DATA PATH>
 #
-# -p: print hash list
+# -c: print checksums 
 #
 # O. Lindemann & F. Krause
 
 
-if [ "$1" = "-p" ]; then
+if [ "$1" = "-c" ]; then
 	cd $2
 	find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///'
 else
