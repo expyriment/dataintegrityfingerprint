@@ -8,5 +8,8 @@ bash bash/dif.sh ${1}
 #bash bash/dif.sh -c ${1} > checksums.bash
 
 echo "Python2"
-python2 python/dif.py ${1}
+python2 python/dif.py  ${1}
+
+echo "Python3"
+python3 python/dif.py  ${1}
 

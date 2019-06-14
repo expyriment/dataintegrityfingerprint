@@ -5,7 +5,6 @@ import sys
 import codecs
 import hashlib
 import multiprocessing
-from functools import partial
 
 
 class DataIntegrityFingerprint:
@@ -104,13 +103,12 @@ class DataIntegrityFingerprint:
         """
 
         self._hash_list = []
-        func = partial(_hash_file, hash_algorithm = self._hash_algorithm)
-        for counter, rtn in enumerate(
-                multiprocessing.Pool().imap_unordered(func, self._files)):
+        func_args = zip(self._files, [self._hash_algorithm]*len(self._files))
+        pool = multiprocessing.Pool()
+        for counter, rtn in enumerate(pool.imap_unordered(_hash_file, func_args)):
             if progress is not None:
                 progress(counter + 1, len(self._files),
-                         "{0}/{1}".format(counter + 1,
-                                          len(self._files)))
+                         "{0}/{1}".format(counter + 1, len(self._files)))
             fl = os.path.relpath(rtn[1], self._data).replace(os.path.sep, "/")
             self._hash_list.append((rtn[0], fl))
 
@@ -131,12 +129,13 @@ class DataIntegrityFingerprint:
             return True
 
 
-def _hash_file(filename, hash_algorithm):
-    hasher = hashlib.new(hash_algorithm)
-    with open(filename, 'rb') as f:
+def _hash_file(args):
+    # args = (filename, hash_algorithm)
+    hasher = hashlib.new(args[1])
+    with open(args[0], 'rb') as f:
         for block in iter(lambda: f.read(64*1024), b''):
             hasher.update(block)
-    return hasher.hexdigest(), filename
+    return hasher.hexdigest(), args[0]
 
 
 if __name__ == "__main__":
@@ -160,19 +159,19 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--save-checksums-file", dest="savechecksumsfile",
                         action="store_true",
                         help="save checksums file",
-                        default = False)
+                        default=False)
     parser.add_argument("-c", "--checksums-file", dest="checksumsfile",
                         action="store_true",
                         help="show checksums file",
-                        default = False)
+                        default=False)
     parser.add_argument("-p", "--progress", dest="progressbar",
                         action="store_true",
                         help="show progressbar",
-                        default = False)
+                        default=False)
     parser.add_argument("-f", "--from-checksums-file", dest="fromchecksumsfile",
                         action="store_true",
                         help="PATH is a checksums file",
-                        default = False)
+                        default=False)
     args = vars(parser.parse_args())
 
     if args["PATH"] is None:
