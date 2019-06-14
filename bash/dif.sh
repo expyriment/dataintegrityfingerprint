@@ -8,17 +8,22 @@
 #
 # O. Lindemann & F. Krause
 
+
 if [ "$1" = "-p" ]; then
-	find $2 -type f -print0 | xargs -0 sha256sum
+	cd $2
+	find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///'
 else
 	# find all files
 	# make hash list
 	# sort them
+	# remove '.\' before each file
 	# create master hash
 	# print out only the master hash
-	find $1 -type f -print0 \
-			| xargs -0 sha256sum \
+	cd $1
+	find . -type f -print0 \
+			| xargs -0 shasum -a 256 \
 			| sort \
-			| sha256sum \
+			| sed 's/\.\///' \
+			| shasum -a 256 \
 			| cut -d' ' -f1
 fi

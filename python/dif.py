@@ -1,14 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 import os
 import sys
 import codecs
 import hashlib
-import posixpath
-import collections
 import multiprocessing
 from functools import partial
 
-     
+
 class DataIntegrityFingerprint:
     """A class representing a DataIntegrityFingerprint (DIF).
 
@@ -41,15 +40,18 @@ class DataIntegrityFingerprint:
             raise ValueError("Hash algorithm '{0}' not supported.".format(
                 hash_algorithm))
 
-        self._data = os.path.abspath(data).strip(os.path.sep)
+        self._data = os.path.abspath(data)
         self._hash_algorithm = hash_algorithm
         self._files = []
-        self._file_hashes = {}
+        self._hash_dict = {}
+
         if from_checksums_file:
+            length = hashlib.new(self._hash_algorithm).digest_size * 2
             with codecs.open(data, encoding="utf-8") as f:
                 for line in f:
-                    length = hashlib.new(self._hash_algorithm).digest_size * 2
-                    self._file_hashes[line[:length]] = line[length:].strip()
+                    hash = line[:length]
+                    fl = line[length:].strip()
+                    self._hash_dict[hash] = fl
         else:
             for dir_, _, files in os.walk(self._data):
                 for filename in files:
@@ -63,18 +65,26 @@ class DataIntegrityFingerprint:
         return self._data
 
     @property
-    def file_hashes(self):
-        return self._file_hashes
+    def file_hash_dict(self):
+        if len(self._hash_dict) < 1:
+            self.generate()
+        return self._hash_dict
+
+    @property
+    def checksums(self):
+        rtn = ""
+        if len(self.file_hash_dict) >= 1:
+            for hash in sorted(self.file_hash_dict.keys()):
+                rtn += u"{0}  {1}\n".format(hash, self.file_hash_dict[hash])
+        return rtn
 
     @property
     def master_hash(self):
-        if len(self._file_hashes)<1:
+        if len(self.file_hash_dict) < 1:
             return None
-        file_hashes = sorted(self._file_hashes.keys())
-        checksums_list = ["{0}  {1}\n".format(k, self._file_hashes[k]) for k in file_hashes]
-        self._checksums = "".join(checksums_list)
+
         hasher = hashlib.new(self._hash_algorithm)
-        hasher.update(self._checksums.encode("utf-8"))
+        hasher.update(self.checksums.encode("utf-8"))
         return hasher.hexdigest()
 
     def generate(self, progress=None):
@@ -98,8 +108,9 @@ class DataIntegrityFingerprint:
                 progress(counter + 1, len(self._files),
                          "{0}/{1}".format(counter + 1,
                                           len(self._files)))
-            self._file_hashes[rtn[0]] = os.path.split(self.data)[-1] + "/" + \
-                    os.path.relpath(rtn[1], self._data).replace(os.path.sep, "/")
+            print(os.path.split(self.data)[-1])
+            fl = os.path.relpath(rtn[1], self._data).replace(os.path.sep, "/")
+            self._hash_dict[rtn[0]] = fl
 
     def save_checksums(self):
         """Save the checksums to a file.
@@ -109,11 +120,12 @@ class DataIntegrityFingerprint:
         """
 
         if self.master_hash is not None:
-            filename = os.path.split(self._data)[-1] + ".{0}".format(self._hash_algorithm) 
+            filename = os.path.split(self._data)[-1] + ".{0}".format(
+                            self._hash_algorithm)
             with codecs.open(filename, 'w', "utf-8") as f:
-                f.write(self._checksums)
+                f.write(self.checksums)
             return True
- 
+
 
 def _hash_file(filename, hash_algorithm):
     hasher = hashlib.new(hash_algorithm)
@@ -126,6 +138,16 @@ def _hash_file(filename, hash_algorithm):
 if __name__ == "__main__":
 
     import argparse
+
+    def progress(count, total, status=''):
+        bar_len = 50
+        filled_len = int(round(bar_len * count / float(total)))
+        percents = round(100.0 * count / float(total), 1)
+        bar = '=' * filled_len + ' ' * (bar_len - filled_len)
+        sys.stdout.write('{:5.1f}% [{}] {}\r'.format(percents, bar, status))
+        sys.stdout.flush()
+
+
     parser = argparse.ArgumentParser(
             description="Create a Data Integrity Fingerprint (DIF).",
             epilog="(c) F. Krause & O. Lindemann")
@@ -146,33 +168,25 @@ if __name__ == "__main__":
         sys.exit()
 
     if sys.version[0] == '2':
-        input = raw_input
+        from builtins import input
         args["PATH"] = args["PATH"].decode(sys.stdin.encoding)
 
-    def progress(count, total, status=''):
-        bar_len = 50
-        filled_len = int(round(bar_len * count / float(total)))
-        percents = round(100.0 * count / float(total), 1)
-        bar = '=' * filled_len + ' ' * (bar_len - filled_len)
-        sys.stdout.write('{:5.1f}% [{}] {}\r'.format(percents, bar, status))
-        sys.stdout.flush()
-
-    if args['fromchecksumsfile']:
-        dif = DataIntegrityFingerprint(args["PATH"], True, "sha256")
-    else:
-        dif = DataIntegrityFingerprint(args["PATH"], False, "sha256")
+    dif = DataIntegrityFingerprint(data=args["PATH"],
+                                    from_checksums_file=args['fromchecksumsfile'],
+                                    hash_algorithm="sha256")
+    if not args['fromchecksumsfile']:
         dif.generate(progress=progress)
-        print("")
-    print("DIF: {0}".format(dif))
+
+    print("DIF: {0}".format(str(dif)))
 
     if args['savechecksumsfile']:
-        outfile = os.path.split(dif.data)[-1] + ".{0}".format(diff._hash_algorithm)
+        outfile = os.path.split(dif.data)[-1] + ".{0}".format(dif._hash_algorithm)
         answer = "y"
         if os.path.exists(outfile):
             answer = input(
                     "'{0}' already exists! Overwrite? [y/N]: ".format(outfile))
         if answer == "y":
-            diff.save_checksums()
+            dif.save_checksums()
             print("Checksums have been written to '{0}'.".format(outfile))
         else:
             print("Checksums have NOT been written.")
