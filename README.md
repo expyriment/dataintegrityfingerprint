@@ -32,5 +32,6 @@ DIF procedure
 ### Note
 On a Unix(-like) system with a UTF-8 locale, the procedure is equivalent to:
 ```
-find data -type f -print0 | xargs -0 shasum -a 256 | sort | shasum -a 256 | cut -d' ' -f1
+cd <DATA_FOLDER>
+find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///' | shasum -a 256 | cut -d' ' -f1
 ```
