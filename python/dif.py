@@ -14,9 +14,8 @@ class DataIntegrityFingerprint:
     Example
     -------
     dif = DataIntegrityFingerPrint("~/Downloads")
-    dif.generate()
     print(dif)
-
+    print(dif.checksums)
     """
 
     def __init__(self, data, from_checksums_file=False, hash_algorithm="sha256"):
@@ -166,6 +165,10 @@ if __name__ == "__main__":
                         action="store_true",
                         help="show checksums file",
                         default = False)
+    parser.add_argument("-p", "--progress", dest="progressbar",
+                        action="store_true",
+                        help="show progressbar",
+                        default = False)
     parser.add_argument("-f", "--from-checksums-file", dest="fromchecksumsfile",
                         action="store_true",
                         help="PATH is a checksums file",
@@ -183,12 +186,13 @@ if __name__ == "__main__":
     dif = DataIntegrityFingerprint(data=args["PATH"],
                                     from_checksums_file=args['fromchecksumsfile'],
                                     hash_algorithm="sha256")
-    if not args['fromchecksumsfile']:
+
+    if not args['fromchecksumsfile'] and args['progressbar']:
         dif.generate(progress=progress)
+        print("")
 
     if args['checksumsfile']:
         print(dif.checksums)
-
     else:
         print(dif)
 
