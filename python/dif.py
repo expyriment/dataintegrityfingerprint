@@ -8,6 +8,7 @@ import codecs
 import hashlib
 import multiprocessing
 
+CHECKSUMS_SEPERATOR = "  "
 
 class DataIntegrityFingerprint:
     """A class representing a DataIntegrityFingerprint (DIF).
@@ -18,6 +19,7 @@ class DataIntegrityFingerprint:
     print(dif)
     print(dif.checksums)
     """
+
 
     def __init__(self, data, from_checksums_file=False, hash_algorithm="sha256"):
         """Create a DataIntegrityFingerprint object.
@@ -49,9 +51,7 @@ class DataIntegrityFingerprint:
             length = hashlib.new(self._hash_algorithm).digest_size * 2
             with codecs.open(data, encoding="utf-8") as f:
                 for line in f:
-                    hash = line[:length]
-                    fl = line[length:].strip()
-                    self._hash_list.append((hash, fl))
+                    self._hash_list.append(line.split(CHECKSUMS_SEPERATOR))
                     self._sort_hash_list()
         else:
             for dir_, _, files in os.walk(self._data):
@@ -74,8 +74,8 @@ class DataIntegrityFingerprint:
     @property
     def checksums(self):
         rtn = ""
-        for hash, fl in self.file_hash_list:
-            rtn += u"{0}  {1}\n".format(hash, fl)
+        for h, fl in self.file_hash_list:
+            rtn += u"{0}{1}{2}\n".format(h, CHECKSUMS_SEPERATOR, fl)
         return rtn
 
     @property
