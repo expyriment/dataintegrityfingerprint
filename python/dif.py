@@ -51,7 +51,8 @@ class DataIntegrityFingerprint:
             length = hashlib.new(self._hash_algorithm).digest_size * 2
             with codecs.open(data, encoding="utf-8") as f:
                 for line in f:
-                    self._hash_list.append(line.split(CHECKSUMS_SEPERATOR))
+                    h, fl = line.split(CHECKSUMS_SEPERATOR)
+                    self._hash_list.append((h, fl.strip()))
                     self._sort_hash_list()
         else:
             for dir_, _, files in os.walk(self._data):
