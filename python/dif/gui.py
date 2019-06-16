@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 from __future__ import absolute_import, unicode_literals
-
-from dif import DataIntegrityFingerprint as DIF
+from . import DataIntegrityFingerprint as DIF
 
 import tkinter as tk
-from tkinter import messagebox
 
 try:
     from tkinter.filedialog import askdirectory, asksaveasfilename
@@ -13,7 +11,7 @@ except:
     # proably python 2
     from tkFileDialog import askdirectory, asksaveasfile
 
-class DIF_GUI(tk.Tk):
+class TK_GUI(tk.Tk):
     def __init__(self, root):
 
         self.directory = None
@@ -40,6 +38,8 @@ class DIF_GUI(tk.Tk):
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.close)
         menubar.add_cascade(label="Data", menu=filemenu)
+
+        self.hash_menu = tk.Menu(menubar, tearoff=0)
 
         aboutmenu = tk.Menu(menubar, tearoff=0)
         aboutmenu.add_command(label="About...", command=self.about)
@@ -163,9 +163,6 @@ class DIF_GUI(tk.Tk):
         if len(flname)>0:
             self.dif.save_checksums(flname)
 
-def start_gui():
-    app = DIF_GUI(None)
-    app.mainloop()
-
 if __name__ == "__main__":
-    start_gui()
+    app = TK_GUI(None)
+    app.mainloop()

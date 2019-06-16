@@ -7,12 +7,17 @@ echo "Bash"
 bash bash/dif.sh ${1}
 #bash bash/dif.sh -c ${1} > checksums.bash
 
+cd python
+
 echo "Python2"
-python2 python/dif.py  ${1}
+python2 -m dif.cli ${1}
 
 echo "Python3"
-python3 python/dif.py  ${1}
-#python3 python/dif.py -f checksums.bash 
+python3 -m dif.cli ${1}
+#python3 -m dif.cli -f checksums.bash 
+#python3 -m dif.gui
+
+cd ..
 
 echo "R"
 Rscript -e "source('R/dif.R');  master_hash(DIF('${1}'))"
