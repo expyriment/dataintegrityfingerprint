@@ -2,7 +2,7 @@ Example using DIF package
 ```
 import dif
 
-d = dif.DataIntegrityFingerPrint("~/Downloads")
+d = dif.DataIntegrityFingerprint("/home/me/Downloads")
 print(d)
 print(d.checksums)
 print(d.master_hash)
