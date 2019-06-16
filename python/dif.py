@@ -94,7 +94,6 @@ class DataIntegrityFingerprint:
         return hasher.hexdigest()
 
     def _sort_hash_list(self):
-        # TODO I now sort not case sensitive
         self._hash_list = sorted(self._hash_list, key=lambda x: x[0] + x[1])
 
     def generate(self, progress=None):
