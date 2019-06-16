@@ -21,7 +21,8 @@ class DataIntegrityFingerprint:
     """
 
 
-    def __init__(self, data, from_checksums_file=False, hash_algorithm="sha256"):
+    def __init__(self, data, from_checksums_file=False, hash_algorithm="sha256",
+                    multiprocessing=True):
         """Create a DataIntegrityFingerprint object.
 
         Parameters
@@ -32,6 +33,9 @@ class DataIntegrityFingerprint:
             data argument is a checksums file
         hash_algorithm : str
             the hash algorithm (optional, default: sha256)
+        multiprocessing : bool
+            using multi CPU cores (optional, default: True)
+            speeds up creating of checksums for large data files
 
         """
 
@@ -46,12 +50,13 @@ class DataIntegrityFingerprint:
         self._hash_algorithm = hash_algorithm
         self._files = []
         self._hash_list = []
+        self.multiprocessing = multiprocessing
 
         if from_checksums_file:
             length = hashlib.new(self._hash_algorithm).digest_size * 2
             with codecs.open(data, encoding="utf-8") as f:
                 for line in f:
-                    h, fl = line.split(CHECKSUMS_SEPERATOR)
+                    h, fl = line.split(CHECKSUMS_SEPERATOR, maxsplit=1)
                     self._hash_list.append((h, fl.strip()))
                     self._sort_hash_list()
         else:
@@ -89,6 +94,7 @@ class DataIntegrityFingerprint:
         return hasher.hexdigest()
 
     def _sort_hash_list(self):
+        # TODO I now sort not case sensitive
         self._hash_list = sorted(self._hash_list, key=lambda x: x[0] + x[1])
 
     def generate(self, progress=None):
@@ -107,8 +113,11 @@ class DataIntegrityFingerprint:
 
         self._hash_list = []
         func_args = zip(self._files, [self._hash_algorithm]*len(self._files))
-        pool = multiprocessing.Pool()
-        for counter, rtn in enumerate(pool.imap_unordered(_hash_file, func_args)):
+        if self.multiprocessing:
+            imap = multiprocessing.Pool().imap_unordered
+        else:
+            imap = map
+        for counter, rtn in enumerate(imap(_hash_file, func_args)):
             if progress is not None:
                 progress(counter + 1, len(self._files),
                          "{0}/{1}".format(counter + 1, len(self._files)))
@@ -187,7 +196,8 @@ if __name__ == "__main__":
 
     dif = DataIntegrityFingerprint(data=args["PATH"],
                                     from_checksums_file=args['fromchecksumsfile'],
-                                    hash_algorithm="sha256")
+                                    hash_algorithm="sha256",
+                                    multiprocessing=True)
 
     if not args['fromchecksumsfile'] and args['progressbar']:
         dif.generate(progress=progress)

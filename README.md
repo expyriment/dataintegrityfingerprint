@@ -23,8 +23,8 @@ DIF procedure
        UTF-8 shall be replaced with a U+003F question mark character;
        `checksums` shall have no empty lines)
 
-2. Sort the lines in `checksums` in ascending Unicode code point order (not Unicode
-   collation algorithm)
+2. Sort the lines in `checksums` in ascending Unicode code point order (i.e.,
+   sorting capital letters first or byte-wise sorting, no sorting based on the Unicode collation algorithm)
 
 3. Calculate the hexadecimal digest of the SHA-256 hash of the sorted
    contents of `checksums`
@@ -34,5 +34,6 @@ DIF procedure
 On a Unix(-like) system with a UTF-8 locale, the procedure is equivalent to:
 ```
 cd <DATA_FOLDER>
+export LC_ALL=C
 find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///' | shasum -a 256 | cut -d' ' -f1
 ```

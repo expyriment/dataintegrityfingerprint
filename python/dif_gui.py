@@ -55,16 +55,16 @@ class DIF_GUI(tk.Tk):
         tk.Label(frame_folder, text="Folder:", width=6, anchor=tk.W).pack(
                 side=tk.LEFT)
         self.foldername = tk.StringVar()
-        label_folder = tk.Label(frame_folder, 
+        label_folder = tk.Label(frame_folder,
                 textvariable=self.foldername, anchor=tk.W, width=80)
         label_folder.pack(side=tk.LEFT)
 
         ## master hash frame (bottom)
         frame_master = tk.Frame(frame1)
         frame_master.pack(side = tk.BOTTOM)
-        tk.Label(frame_master, text="Master hash:", width=11, 
+        tk.Label(frame_master, text="Master hash:", width=11,
                             anchor=tk.W).pack(side=tk.LEFT)
-        self.master_hash_text = tk.Text(frame_master, height=1, 
+        self.master_hash_text = tk.Text(frame_master, height=1,
                             borderwidth=0, width=85, relief=tk.SUNKEN)
         self.master_hash_text.pack(side=tk.RIGHT)
 
@@ -73,7 +73,7 @@ class DIF_GUI(tk.Tk):
         xscrollbar.pack(side=tk.BOTTOM, fill=tk.X)
         yscrollbar = tk.Scrollbar(frame1, orient=tk.VERTICAL)
         yscrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.text_output = tk.Text(frame1, height=20, width=80, 
+        self.text_output = tk.Text(frame1, height=20, width=80,
                                    borderwidth=3, relief="sunken",
                                    yscrollcommand=yscrollbar.set,
                                    xscrollcommand=xscrollbar.set)
@@ -95,12 +95,12 @@ class DIF_GUI(tk.Tk):
             b.pack(side = tk.LEFT, anchor=tk.W)
 
 
-        bbutton= tk.Button(frame_btn, text="Select folder", 
+        bbutton= tk.Button(frame_btn, text="Select folder",
                             command=self.select_folder, height=2, width=10)
         bbutton.pack(side = tk.RIGHT, fill=tk.X)
 
         self._hashlist_calculated = False
-        self.recalc_btn = tk.Button(frame_btn, text="Make hashes", 
+        self.recalc_btn = tk.Button(frame_btn, text="Make hashes",
                                         command=self.make_hashes, height=2,
                                     width=10, state = tk.DISABLED)
         self.recalc_btn.pack(side = tk.RIGHT, fill=tk.X)
@@ -123,7 +123,7 @@ class DIF_GUI(tk.Tk):
             self.text_output.insert(tk.INSERT, "Please wait....")
             self.update()
 
-            data_hash = DIF(path = self.dirctory, 
+            data_hash = DIF(path = self.dirctory,
                                    algorithm=self.algorithm.get())
 
             self.text_output.delete(1.0, tk.END)

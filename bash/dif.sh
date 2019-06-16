@@ -8,6 +8,7 @@
 #
 # O. Lindemann & F. Krause
 
+export LC_ALL=C # ensure correct sorting
 
 if [ "$1" = "-c" ]; then
 	cd $2

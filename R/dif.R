@@ -8,38 +8,31 @@ file_hash <- function(filename, hash_algorithm="sha256") {
 }
 
 DIF <- function(folder, hash_algorithm="sha256") {
-  filelist = sort(list.files(folder, recursive=T, all.files=T))
+  filelist = list.files(folder, recursive=T, all.files=T)
   hashes = c()
   for (f in filelist) {
     hashes = c(hashes, 
                file_hash(filename=file.path(folder, f),
                          hash_algorithm=hash_algorithm))
   }  
-  #sort using data frame
-  df = data.frame(hashes=hashes, files=filelist)
-  df = df[with(df, order(hashes, files)), ]
-  
+ 
   rtn = list()
   rtn$folder = folder
   rtn$hash_algorithm = hash_algorithm
-  rtn$hashes = df$hashes
-  rtn$files = df$files
+  rtn$hashes = hashes
+  rtn$files = filelist
   class(rtn) = "DIF"
-  return(rtn)
+  return(sort(rtn))
 }
 
-checksums <- function(x) {
-  rtn = ""
-  for (i in 1:length(x$hashes)) {
-    l = paste0(x$hashes[i], CHECKSUMS_SEPERATOR, x$files[i], sep="\n")
-    rtn = paste0(rtn, l)
-  }
-  return(rtn)
+sort.DIF <- function(x) {
+  # sorting byte-wise (captial letters first) like unix under locale "C"
+  idx = order(x$hashes, x$files, method="radix")
+  x$hashes = x$hashes[idx]
+  x$files = x$files[idx]
+  return(x)
 }
 
-master_hash <- function(x) {
-  return(digest(checksums(x), algo=x$hash_algorithm,  serialize = F))
-}
 
 print.DIF <- function(x) {
   cat("Folder: ")
@@ -55,6 +48,19 @@ print.DIF <- function(x) {
 
 summary.DIF <- function(x) {
   cat(checksums(x))
+}
+
+checksums <- function(x) {
+  rtn = ""
+  for (i in 1:length(x$hashes)) {
+    l = paste0(x$hashes[i], CHECKSUMS_SEPERATOR, x$files[i], sep="\n")
+    rtn = paste0(rtn, l)
+  }
+  return(rtn)
+}
+
+master_hash <- function(x) {
+  return(digest(checksums(x), algo=x$hash_algorithm,  serialize = F))
 }
 
 write_checksums <- function(dif, filename) {
@@ -81,5 +87,5 @@ load_checksums <- function(filename, hash_algorithm="sha256") {
   }
   close(fl)
   class(rtn) = "DIF"
-  return(rtn)
+  return(sort(rtn))
 }
