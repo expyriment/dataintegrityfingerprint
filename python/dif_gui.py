@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
-from __future__ import unicode_literals
 
-from dif import DIF
+from __future__ import absolute_import, unicode_literals
+
+from dif import DataIntegrityFingerprint as DIF
 
 import tkinter as tk
 from tkinter import messagebox
 
 try:
-    from tkinter.filedialog import askdirectory, asksaveasfile
+    from tkinter.filedialog import askdirectory, asksaveasfilename
 except:
     # proably python 2
     from tkFileDialog import askdirectory, asksaveasfile
 
-
 class DIF_GUI(tk.Tk):
     def __init__(self, root):
 
-        self.dirctory = None
+        self.directory = None
+        self.dif = None
+        self._hashlist_calculated = False
 
         # GUI
         tk.Tk.__init__(self, root)
@@ -31,7 +33,7 @@ class DIF_GUI(tk.Tk):
         filemenu = tk.Menu(menubar, tearoff=0)
         filemenu.add_command(label="Select Folder", command=self.select_folder)
         filemenu.add_separator()
-        filemenu.add_command(label="Recalculate Hashes",
+        filemenu.add_command(label="Make Hashes",
                         command=self.make_hashes, state=tk.DISABLED)
         filemenu.add_command(label="Save Hash List", command=self.save,
                         state=tk.DISABLED)
@@ -52,12 +54,12 @@ class DIF_GUI(tk.Tk):
         ##  folder label
         frame_folder = tk.Frame(frame1)
         frame_folder.pack(side=tk.TOP)
-        tk.Label(frame_folder, text="Folder:", width=6, anchor=tk.W).pack(
-                side=tk.LEFT)
+        tk.Label(frame_folder, text="Folder:", width=7,
+                            anchor=tk.W).pack(side=tk.LEFT)
         self.foldername = tk.StringVar()
         label_folder = tk.Label(frame_folder,
                 textvariable=self.foldername, anchor=tk.W, width=80)
-        label_folder.pack(side=tk.LEFT)
+        label_folder.pack(side=tk.RIGHT)
 
         ## master hash frame (bottom)
         frame_master = tk.Frame(frame1)
@@ -87,20 +89,18 @@ class DIF_GUI(tk.Tk):
         frame_btn.pack(side = tk.BOTTOM, fill = tk.X)
 
         self.algorithm = tk.StringVar()
-        self.algorithm.set("sha1") # initialize
-        self.supported_algorithm = ["sha1", "md5", "sha256"]
-        for mode in self.supported_algorithm:
-            b = tk.Radiobutton(frame_btn, text=mode, variable=self.algorithm,
-                               value=mode, command=self.change_algorithm)
-            b.pack(side = tk.LEFT, anchor=tk.W)
+        self.algorithm.set("sha256") # initialize
+        tk.Label(frame_btn, text="Hash algorithm:", width=13,
+                            anchor=tk.W).pack(side=tk.LEFT)
+        alg_menu = tk.OptionMenu(frame_btn, self.algorithm, *DIF.algorithms_guaranteed,
+                command=self.change_algorithm)
+        alg_menu.pack(side = tk.LEFT, anchor=tk.W)
 
-
-        bbutton= tk.Button(frame_btn, text="Select folder",
+        bbutton= tk.Button(frame_btn, text="Select Folder",
                             command=self.select_folder, height=2, width=10)
         bbutton.pack(side = tk.RIGHT, fill=tk.X)
 
-        self._hashlist_calculated = False
-        self.recalc_btn = tk.Button(frame_btn, text="Make hashes",
+        self.recalc_btn = tk.Button(frame_btn, text="Make Hashes",
                                         command=self.make_hashes, height=2,
                                     width=10, state = tk.DISABLED)
         self.recalc_btn.pack(side = tk.RIGHT, fill=tk.X)
@@ -108,35 +108,36 @@ class DIF_GUI(tk.Tk):
 
     def select_folder(self):
         tk.Tk().withdraw()
-        self.dirctory = askdirectory()
-        self.foldername.set(self.dirctory)
-        self.update()
+        d = askdirectory()
+        if len(d)>1:
+            self.directory = d
+            self.foldername.set(d)
+            self.title("DIF GUI: " + str(d))
+            self.update()
 
-        self.title("DIF GUI: "+ str(self.dirctory))
-        self.make_hashes()
+            self.make_hashes()
 
 
     def make_hashes(self):
-        if self.dirctory is not None:
+        if self.directory is not None:
             self.master_hash_text.delete(1.0, tk.END)
             self.text_output.delete(1.0, tk.END)
             self.text_output.insert(tk.INSERT, "Please wait....")
             self.update()
 
-            data_hash = DIF(path = self.dirctory,
-                                   algorithm=self.algorithm.get())
+            self.dif = DIF(data = self.directory,
+                           hash_algorithm=self.algorithm.get())
 
             self.text_output.delete(1.0, tk.END)
-            self.text_output.insert(tk.INSERT, data_hash.to_string())
+            self.text_output.insert(tk.INSERT, self.dif.checksums)
             self.master_hash_text.insert(tk.INSERT,
-                            "{0} (short: {1})".format(data_hash.master_hash, \
-                                                      data_hash.master_hash_short))
+                                        "{0}".format(self.dif.master_hash))
             self._hashlist_calculated = True
             self.filemenu.entryconfigure(3, state=tk.ACTIVE)  # save
             self.recalc_btn.config(state=tk.DISABLED) # re-calc
             self.filemenu.entryconfigure(2, state=tk.DISABLED) # re-calc
 
-    def change_algorithm(self):
+    def change_algorithm(self, new_alogo):
         if self._hashlist_calculated:
             self.recalc_btn.config(state= tk.ACTIVE)
             self.filemenu.entryconfigure(2, state = tk.ACTIVE)
@@ -149,19 +150,18 @@ class DIF_GUI(tk.Tk):
         pass
 
     def save(self):
-
-        filetypes = list(map(lambda x: (x, "."+x), self.supported_algorithm))
+        if self.dif is None:
+            return
+        filetypes = list(map(lambda x: (x, "."+x),
+                            DIF.algorithms_guaranteed))
         filetypes.append(("All Files", "*.*"))
-
-        file = asksaveasfile(mode='w', defaultextension=".{0}".format(
-                                self.algorithm.get()),
+        default = (self.algorithm.get(), "."+self.algorithm.get())
+        filetypes.remove(default)
+        filetypes.insert(0, default)
+        flname = asksaveasfilename(defaultextension=default[1],
                                 filetypes=filetypes)
-        txt = self.text_output.get(1.0, tk.END)[:-1]
-        if PY3:
-            file.write(txt)
-        else:
-            file.write(string_encode(txt))
-        file.close()
+        if len(flname)>0:
+            self.dif.save_checksums(flname)
 
 def start_gui():
     app = DIF_GUI(None)

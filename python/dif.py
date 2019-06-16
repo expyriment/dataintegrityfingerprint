@@ -20,6 +20,7 @@ class DataIntegrityFingerprint:
     print(dif.checksums)
     """
 
+    algorithms_guaranteed = sorted(hashlib.algorithms_guaranteed)
 
     def __init__(self, data, from_checksums_file=False, hash_algorithm="sha256",
                     multiprocessing=True):
@@ -42,7 +43,7 @@ class DataIntegrityFingerprint:
         if not from_checksums_file:
             assert os.path.isdir(data)
 
-        if hash_algorithm not in hashlib.algorithms_guaranteed:
+        if hash_algorithm not in DataIntegrityFingerprint.algorithms_guaranteed:
             raise ValueError("Hash algorithm '{0}' not supported.".format(
                 hash_algorithm))
 
@@ -94,7 +95,6 @@ class DataIntegrityFingerprint:
         return hasher.hexdigest()
 
     def _sort_hash_list(self):
-        # TODO I now sort not case sensitive
         self._hash_list = sorted(self._hash_list, key=lambda x: x[0] + x[1])
 
     def generate(self, progress=None):
@@ -126,7 +126,7 @@ class DataIntegrityFingerprint:
 
         self._sort_hash_list()
 
-    def save_checksums(self):
+    def save_checksums(self, filename=None):
         """Save the checksums to a file.
 
         Returns True if successful.
@@ -134,8 +134,10 @@ class DataIntegrityFingerprint:
         """
 
         if self.master_hash is not None:
-            filename = os.path.split(self._data)[-1] + ".{0}".format(
+            if filename is None:
+                filename = os.path.split(self._data)[-1] + ".{0}".format(
                             self._hash_algorithm)
+
             with codecs.open(filename, 'w', "utf-8") as f:
                 f.write(self.checksums)
             return True
