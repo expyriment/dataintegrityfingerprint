@@ -10,12 +10,12 @@ bash bash/dif.sh ${1}
 cd python
 
 echo "Python2"
-python2 -m dif.cli ${1}
+python2 -m dataintegrityfingerprint.cli ${1}
 
 echo "Python3"
-python3 -m dif.cli ${1}
-#python3 -m dif.cli -f checksums.bash 
-#python3 -m dif.gui
+python3 -m dataintegrityfingerprint.cli ${1}
+#python3 -m dataintegrityfingerprint.cli -f checksums.bash 
+#python3 -m dataintegrityfingerprint.gui
 
 cd ..
 

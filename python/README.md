@@ -1,22 +1,20 @@
 Example using DIF package
 ```
-import dif
+from dataintegrityfingerprint import DataIntegrityFingerprint
 
-d = dif.DataIntegrityFingerprint("/home/me/Downloads")
-print(d)
-print(d.checksums)
-print(d.master_hash)
+dif = DataIntegrityFingerprint("/home/me/Downloads")
+print(dif)
+print(dif.checksums)
+print(dif.master_hash)
 ```
 
 DIF Command line interface
 ```
-python3 -m dif.cli -h
+python3 -m dataintegrityfingerprint.cli -h
 ```
 
 
 DIF GUI
 ```
-python3 -m dif.gui
+python3 -m dataintegrityfingerprint.gui
 ```
-
-
