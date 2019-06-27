@@ -1,15 +1,28 @@
 #!/usr/bin/env python3
+
+"""
+Data Integrity Fingerprint
+
+This module is the Python reference implementation of the Data Integrity
+Fingerprint (DIF).
+
+"""
+
 from __future__ import unicode_literals
+
 
 __author__ = 'Oliver Lindemann <oliver@expyriment.org>, ' \
              'Florian Krause <florian@expyriment.org>'
+
 
 import os
 import codecs
 import hashlib
 import multiprocessing
 
+
 CHECKSUMS_SEPERATOR = "  "
+
 
 class DataIntegrityFingerprint:
     """A class representing a DataIntegrityFingerprint (DIF).
@@ -21,10 +34,10 @@ class DataIntegrityFingerprint:
     print(dif.checksums)
     """
 
-    algorithms_guaranteed = sorted(hashlib.algorithms_guaranteed)
+    available_algorithms = sorted(hashlib.algorithms_guaranteed)
 
-    def __init__(self, data, from_checksums_file=False, hash_algorithm="sha256",
-                    multiprocessing=True):
+    def __init__(self, data, from_checksums_file=False,
+                 hash_algorithm="sha256", multiprocessing=True):
         """Create a DataIntegrityFingerprint object.
 
         Parameters
@@ -44,7 +57,7 @@ class DataIntegrityFingerprint:
         if not from_checksums_file:
             assert os.path.isdir(data)
 
-        if hash_algorithm not in DataIntegrityFingerprint.algorithms_guaranteed:
+        if hash_algorithm not in DataIntegrityFingerprint.available_algorithms:
             raise ValueError("Hash algorithm '{0}' not supported.".format(
                 hash_algorithm))
 
@@ -64,7 +77,8 @@ class DataIntegrityFingerprint:
         else:
             for dir_, _, files in os.walk(self._data):
                 for filename in files:
-                    self._files.append(os.path.join(self._data, dir_, filename))
+                    self._files.append(os.path.join(self._data, dir_,
+                                                    filename))
 
     def __str__(self):
         return str(self.master_hash)
@@ -113,7 +127,7 @@ class DataIntegrityFingerprint:
         """
 
         self._hash_list = []
-        func_args = zip(self._files, [self._hash_algorithm]*len(self._files))
+        func_args = zip(self._files, [self._hash_algorithm] * len(self._files))
         if self.multiprocessing:
             imap = multiprocessing.Pool().imap_unordered
         else:
@@ -130,17 +144,26 @@ class DataIntegrityFingerprint:
     def save_checksums(self, filename=None):
         """Save the checksums to a file.
 
-        Returns True if successful.
+        Parameters
+        ----------
+        filename : str, optional
+            the name of the file to save checksums to
+
+        Returns
+        -------
+        success : bool
+            whether saving was successful
 
         """
 
         if self.master_hash is not None:
             if filename is None:
                 filename = os.path.split(self._data)[-1] + ".{0}".format(
-                            self._hash_algorithm)
+                    self._hash_algorithm)
 
             with codecs.open(filename, 'w', "utf-8") as f:
                 f.write(self.checksums)
+
             return True
 
 
@@ -151,5 +174,3 @@ def _hash_file(args):
         for block in iter(lambda: f.read(64*1024), b''):
             hasher.update(block)
     return hasher.hexdigest(), args[0]
-
-
