@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 
-from __future__ import absolute_import, unicode_literals
-from . import DataIntegrityFingerprint as DIF
 
-import tkinter as tk
+from __future__ import absolute_import, unicode_literals
+
+
 
 try:
+    import tkinter as tk
     from tkinter.filedialog import askdirectory, asksaveasfilename
 except:
     # proably python 2
+    import Tkinter as tk
     from tkFileDialog import askdirectory, asksaveasfile
+
+from . import DataIntegrityFingerprint as DIF
+
 
 class TK_GUI(tk.Tk):
     def __init__(self, root):
@@ -32,7 +37,7 @@ class TK_GUI(tk.Tk):
         filemenu.add_command(label="Select Folder", command=self.select_folder)
         filemenu.add_separator()
         filemenu.add_command(label="Make Hashes",
-                        command=self.make_hashes, state=tk.DISABLED)
+                             command=self.make_hashes, state=tk.DISABLED)
         filemenu.add_command(label="Save Hash List", command=self.save,
                         state=tk.DISABLED)
         filemenu.add_separator()
@@ -92,7 +97,8 @@ class TK_GUI(tk.Tk):
         self.algorithm.set("sha256") # initialize
         tk.Label(frame_btn, text="Hash algorithm:", width=13,
                             anchor=tk.W).pack(side=tk.LEFT)
-        alg_menu = tk.OptionMenu(frame_btn, self.algorithm, *DIF.algorithms_guaranteed,
+        alg_menu = tk.OptionMenu(frame_btn, self.algorithm,
+                                 *DIF.available_algorithms,
                 command=self.change_algorithm)
         alg_menu.pack(side = tk.LEFT, anchor=tk.W)
 
