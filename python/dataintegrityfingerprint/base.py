@@ -60,7 +60,7 @@ class DataIntegrityFingerprint:
                 for line in f:
                     h, fl = line.split(CHECKSUMS_SEPERATOR, maxsplit=1)
                     self._hash_list.append((h, fl.strip()))
-                    self._sort_hash_list()
+                self._sort_hash_list()
         else:
             for dir_, _, files in os.walk(self._data):
                 for filename in files:
