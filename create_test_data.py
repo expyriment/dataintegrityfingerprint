@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
 
 import os
-import random
 import multiprocessing
+import numpy as np
 
 def random_file(para):
-    random.seed(50)
+    np.random.seed(50)
     filename, size_mb = para
     with open(filename,'wb') as fl:
         for _ in range(size_mb):
-            mb = map(lambda x: random.getrandbits(8),
-                    range(1024*1024))
-            fl.write(bytes(mb))
+            mb = np.random.bytes(1024*1024)
+            fl.write(mb)
     print("created {0}".format(filename))
     return
-
 
 if __name__ == "__main__":
     DIR = "test_data"
     N_FILE = 10
-    SIZE_MB = 50
+    SIZE_MB = 100
 
     try:
         os.mkdir(DIR)
@@ -33,3 +31,4 @@ if __name__ == "__main__":
 
     p = multiprocessing.Pool()
     list(p.imap_unordered(random_file, para))
+
