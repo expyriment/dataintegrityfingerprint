@@ -13,6 +13,7 @@ __author__ = 'Oliver Lindemann <oliver@expyriment.org>, ' +\
 import os
 import sys
 import platform
+from threading import Thread
 
 if sys.version[0] == '3':
     import tkinter as tk
@@ -102,9 +103,10 @@ Florian Krause <florian@expyriment.org>
         self.dir_button = ttk.Button(self.frame1, text="Browse",
                                      command=self.set_data_directory)
         self.dir_button.grid(row=0, column=2)
-        self.generate_button = ttk.Button(self.frame1, text="Generate DIF",
-                                          command=self.generate_dif,
-                                          state=tk.DISABLED)
+        self.generate_button = ttk.Button(
+            self.frame1, text="Generate DIF",
+            command=lambda: Thread(target=self.generate_dif).start(),
+            state=tk.DISABLED)
         self.generate_button.grid(row=0, column=3)
 
         self.progressbar = ttk.Progressbar(self.master)
@@ -138,9 +140,9 @@ Florian Krause <florian@expyriment.org>
         self.dif_entry.grid(row=0, column=1, sticky="NSWE")
 
         # Status bar
-        self.status = ttk.Label(self.master, text="Ready", border=1,
-                                relief=tk.SUNKEN, anchor=tk.W)
-        self.status.grid(row=4, column=0, sticky="WE")
+        self.statusbar = ttk.Label(self.master, text="Ready", border=1,
+                                   relief=tk.SUNKEN, anchor=tk.W)
+        self.statusbar.grid(row=4, column=0, sticky="WE")
 
     def set_data_directory(self):
         "Set the data directory."""
@@ -161,7 +163,7 @@ Florian Krause <florian@expyriment.org>
             self.dif_entry.delete(0, tk.END)
             self.dif_entry["state"] = "readonly"
             self.generate_button["state"] = tk.NORMAL
-            self.status["text"] = "Ready"
+            self.statusbar["text"] = "Ready"
             self.dif = None
 
     def generate_dif(self):
@@ -172,10 +174,9 @@ Florian Krause <florian@expyriment.org>
 
             percents = int(round(100.0 * count / float(total), 1))
             self.progressbar["value"] = percents
-            self.status["text"] = \
+            self.statusbar["text"] = \
                 "Generating DIF from data directory...{0}% ({1})".format(
                     percents, status)
-            self.update()
 
         # Block GUI
         self.file_menu.entryconfig(1, state=tk.DISABLED)
@@ -198,7 +199,7 @@ Florian Krause <florian@expyriment.org>
         self.dif_entry["state"] = "readonly"
         self.generate_button["state"] = tk.DISABLED
         self.file_menu.entryconfig(2, state=tk.NORMAL)
-        self.status["text"] = "Generating DIF from data directory...Done"
+        self.statusbar["text"] = "Generating DIF from data directory...Done"
 
         # Unblock GUI
         self.file_menu.entryconfig(1, state=tk.NORMAL)
@@ -211,7 +212,7 @@ Florian Krause <florian@expyriment.org>
         filename = filedialog.askopenfilename()
         algorithm = os.path.splitext(filename)[-1]
         try:
-            self.status["text"] = "Generating DIF from checksums file..."
+            self.statusbar["text"] = "Generating DIF from checksums file..."
 
             # Calculate DIF from checksums file
             self.dif = DIF(filename, from_checksums_file=True,
@@ -233,7 +234,8 @@ Florian Krause <florian@expyriment.org>
             self.dif_entry["state"] = "readonly"
             self.generate_button["state"] = tk.DISABLED
             self.file_menu.entryconfig(2, state=tk.NORMAL)
-            self.status["text"] = "Generating DIF from checksums file...Done"
+            self.statusbar["text"] = \
+                "Generating DIF from checksums file...Done"
         except:
             pass
 
