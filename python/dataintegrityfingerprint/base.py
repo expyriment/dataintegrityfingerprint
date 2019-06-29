@@ -11,7 +11,7 @@ Fingerprint (DIF).
 from __future__ import unicode_literals
 
 
-__author__ = 'Oliver Lindemann <oliver@expyriment.org>, ' \
+__author__ = 'Oliver Lindemann <oliver@expyriment.org>, ' +\
              'Florian Krause <florian@expyriment.org>'
 
 
