@@ -55,3 +55,6 @@ nosetests.xml
 # backup file
 .bak
 .Rproj.user
+
+#test data
+test_data/

@@ -34,6 +34,10 @@ def run_cli():
                         action="store_true",
                         help="show progressbar",
                         default=False)
+    parser.add_argument("-n", "--no-multi-processing", dest="nomultiprocess",
+                        action="store_true",
+                        help="switch of multi processing progressbar",
+                        default=False)
     parser.add_argument("-f", "--from-checksums-file", dest="fromchecksumsfile",
                         action="store_true",
                         help="PATH is a checksums file",
@@ -51,7 +55,7 @@ def run_cli():
     dif = DataIntegrityFingerprint(data=args["PATH"],
                                     from_checksums_file=args['fromchecksumsfile'],
                                     hash_algorithm="sha256",
-                                    multiprocessing=True)
+                                    multiprocessing=not(args['nomultiprocess']))
 
     if not args['fromchecksumsfile'] and args['progressbar']:
         dif.generate(progress=progress)
