@@ -126,7 +126,7 @@ Florian Krause <florian@expyriment.org>
         self.dir_var = tk.StringVar()
         self.dir_var.set("")
         self.dir_entry = ttk.Entry(self.frame1, textvariable=self.dir_var,
-                                   state="readonly")
+                                   state=tk.DISABLED)
         self.dir_entry.grid(row=0, column=1, sticky="WE") #, padx=5)
         self.dir_button = ttk.Button(self.frame1, text="Browse",
                                      command=self.set_data_directory)
@@ -167,7 +167,7 @@ Florian Krause <florian@expyriment.org>
         self.dif_var = tk.StringVar()
         self.dif_var.set("")
         self.dif_entry = ttk.Entry(self.frame2, textvariable=self.dif_var,
-                                   state="readonly")
+                                   state=tk.DISABLED)
         self.dif_entry.grid(row=0, column=1, sticky="NSWE")
         self.copy_button = ttk.Button(self.frame2, text="Copy",
                                       command=self.copy_dif_to_clipboard,
@@ -238,7 +238,6 @@ Florian Krause <florian@expyriment.org>
             progress=None
         self.dif.generate(progress=progress)
         self.file_menu.entryconfig(2, state=tk.NORMAL)
-        self.dir_button.focus()
         self.dir_button.bind("<Return>", self.set_data_directory)
         self.progressbar["value"] = 100
         self.checksum_list["state"] = tk.NORMAL
@@ -249,6 +248,7 @@ Florian Krause <florian@expyriment.org>
             self.algorithm_var.get()))
         self.dif_var.set(self.dif.master_hash)
         self.copy_button["state"] = tk.NORMAL
+        self.copy_button.focus()
         self.statusbar["text"] = "Generating DIF...Done"
         self.unblock_gui()
 
@@ -266,7 +266,6 @@ Florian Krause <florian@expyriment.org>
                            hash_algorithm=self.algorithm_var.get())
             self.file_menu.entryconfig(2, state=tk.NORMAL)
             self.dir_var.set("")
-            self.dir_button.focus()
             self.dir_button.bind("<Return>", self.set_data_directory)
             self.generate_button["state"] = tk.DISABLED
             self.progressbar["value"] = 100
@@ -278,6 +277,7 @@ Florian Krause <florian@expyriment.org>
                 algorithm))
             self.dif_var.set(self.dif.master_hash)
             self.copy_button["state"] = tk.NORMAL
+            self.copy_button.focus()
             self.statusbar["text"] = \
                 "Opening checksums file '{0}'...Done".format(filename)
         except:
