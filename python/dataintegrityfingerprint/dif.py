@@ -14,15 +14,12 @@ from __future__ import unicode_literals
 __author__ = 'Oliver Lindemann <oliver@expyriment.org>, ' \
              'Florian Krause <florian@expyriment.org>'
 
-
 import os
 import codecs
-import hashlib
 import multiprocessing
-
+from . import hashing
 
 CHECKSUMS_SEPERATOR = "  "
-
 
 class DataIntegrityFingerprint:
     """A class representing a DataIntegrityFingerprint (DIF).
@@ -34,10 +31,9 @@ class DataIntegrityFingerprint:
     print(dif.checksums)
     """
 
-    available_algorithms = sorted(hashlib.algorithms_guaranteed)
-
     def __init__(self, data, from_checksums_file=False,
-                 hash_algorithm="sha256", multiprocessing=True):
+                 hash_algorithm="sha256", multiprocessing=True,
+                 allow_non_cryptographic_algorithms=False):
         """Create a DataIntegrityFingerprint object.
 
         Parameters
@@ -51,14 +47,26 @@ class DataIntegrityFingerprint:
         multiprocessing : bool
             using multi CPU cores (optional, default: True)
             speeds up creating of checksums for large data files
+        allow_non_cryptographic_algorithms : bool
+            set True only, if you need non cryptographic algorithms (see notes!)
+
+        Note
+        ----
+        We do not suggest to use non-cryptographic algorithms. Non-cryptographic
+        algorithms are much faster but secure against tampering. Only use this
+        algorithms for checks for technical file damages and in cases in file
+        integrity is not a concern.
 
         """
 
         if not from_checksums_file:
             assert os.path.isdir(data)
 
-        if hash_algorithm not in DataIntegrityFingerprint.available_algorithms:
-            raise ValueError("Hash algorithm '{0}' not supported.".format(
+        if allow_non_cryptographic_algorithms and \
+                hash_algorithm in hashing.NON_CRYPTOGRAPHIC_ALGORITHMS:
+            Warning("Non cryptographic hash function is used.")
+        elif hash_algorithm not in hashing.CRYPTOGRAPHIC_ALGORITHMS:
+            raise ValueError("Hash algorithm '{0}' is not supported.".format(
                 hash_algorithm))
 
         self._data = os.path.abspath(data)
@@ -66,9 +74,9 @@ class DataIntegrityFingerprint:
         self._files = []
         self._hash_list = []
         self.multiprocessing = multiprocessing
+        self.allow_non_cryptographic_algorithms = allow_non_cryptographic_algorithms
 
         if from_checksums_file:
-            length = hashlib.new(self._hash_algorithm).digest_size * 2
             with codecs.open(data, encoding="utf-8") as f:
                 for line in f:
                     h, fl = line.split(CHECKSUMS_SEPERATOR, maxsplit=1)
@@ -105,9 +113,10 @@ class DataIntegrityFingerprint:
         if len(self.file_hash_list) < 1:
             return None
 
-        hasher = hashlib.new(self._hash_algorithm)
+        hasher = hashing.new_hash_instance(self._hash_algorithm,
+                                           self.allow_non_cryptographic_algorithms)
         hasher.update(self.checksums.encode("utf-8"))
-        return hasher.hexdigest()
+        return hasher.digest
 
     def _sort_hash_list(self):
         self._hash_list = sorted(self._hash_list, key=lambda x: x[0] + x[1])
@@ -127,12 +136,15 @@ class DataIntegrityFingerprint:
         """
 
         self._hash_list = []
-        func_args = zip(self._files, [self._hash_algorithm] * len(self._files))
+        func_args = zip(self._files,
+                        [self._hash_algorithm] * len(self._files),
+                        [self.allow_non_cryptographic_algorithms] * len(self._files))
         if self.multiprocessing:
             imap = multiprocessing.Pool().imap_unordered
         else:
             imap = map
-        for counter, rtn in enumerate(imap(_hash_file, func_args)):
+
+        for counter, rtn in enumerate(imap(_map_file_hash, func_args)):
             if progress is not None:
                 progress(counter + 1, len(self._files),
                          "{0}/{1}".format(counter + 1, len(self._files)))
@@ -166,11 +178,9 @@ class DataIntegrityFingerprint:
 
             return True
 
-
-def _hash_file(args):
-    # args = (filename, hash_algorithm)
-    hasher = hashlib.new(args[1])
-    with open(args[0], 'rb') as f:
-        for block in iter(lambda: f.read(64*1024), b''):
-            hasher.update(block)
-    return hasher.hexdigest(), args[0]
+def _map_file_hash(x):
+    # helper function for multi threading of file hashing
+    hasher = hashing.new_hash_instance(hash_algorithm=x[1],
+                                       allow_non_cryptographic_algorithms=x[2])
+    hasher.update_file(filename=x[0])
+    return hasher.digest, x[0]

@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-
 from __future__ import absolute_import, unicode_literals
-
-
 
 try:
     import tkinter as tk
@@ -13,7 +10,8 @@ except:
     import Tkinter as tk
     from tkFileDialog import askdirectory, asksaveasfile
 
-from . import DataIntegrityFingerprint as DIF
+from .dif import DataIntegrityFingerprint as DIF
+from .hashing import CRYPTOGRAPHIC_ALGORITHMS
 
 
 class TK_GUI(tk.Tk):
@@ -97,10 +95,11 @@ class TK_GUI(tk.Tk):
         self.algorithm.set("sha256") # initialize
         tk.Label(frame_btn, text="Hash algorithm:", width=13,
                             anchor=tk.W).pack(side=tk.LEFT)
-        alg_menu = tk.OptionMenu(frame_btn, self.algorithm,
-                                 *DIF.available_algorithms,
-                command=self.change_algorithm)
-        alg_menu.pack(side = tk.LEFT, anchor=tk.W)
+        self.alg_menu = tk.OptionMenu(frame_btn, self.algorithm,
+                                 *CRYPTOGRAPHIC_ALGORITHMS,
+                                 command=self.change_algorithm)
+        self.alg_menu.setvar()
+        self.alg_menu.pack(side = tk.LEFT, anchor=tk.W)
 
         bbutton= tk.Button(frame_btn, text="Select Folder",
                             command=self.select_folder, height=2, width=10)
@@ -158,8 +157,7 @@ class TK_GUI(tk.Tk):
     def save(self):
         if self.dif is None:
             return
-        filetypes = list(map(lambda x: (x, "."+x),
-                            DIF.algorithms_guaranteed))
+        filetypes = list(map(lambda x: (x, "."+x), CRYPTOGRAPHIC_ALGORITHMS))
         filetypes.append(("All Files", "*.*"))
         default = (self.algorithm.get(), "."+self.algorithm.get())
         filetypes.remove(default)
