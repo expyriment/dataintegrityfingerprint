@@ -83,7 +83,6 @@ Florian Krause <florian@expyriment.org>
         for algorithm in CRYPTOGRAPHIC_ALGORITHMS:
             self.algorithm_menu.add_radiobutton(label=algorithm,
                                                 value=algorithm,
-                                                command=self.set_algorithm,
                                                 variable=self.algorithm_var)
         self.options_menu.add_cascade(menu=self.algorithm_menu,
                                       label="Hash algorithm")
@@ -170,6 +169,10 @@ Florian Krause <florian@expyriment.org>
         self.dif_entry = ttk.Entry(self.frame2, textvariable=self.dif_var,
                                    state="readonly")
         self.dif_entry.grid(row=0, column=1, sticky="NSWE")
+        self.copy_button = ttk.Button(self.frame2, text="Copy",
+                                      command=self.copy_dif_to_clipboard,
+                                      state=tk.DISABLED)
+        self.copy_button.grid(row=0, column=2)
 
         # Status bar
         self.statusbar = ttk.Label(self.master, text="", border=1,
@@ -193,21 +196,6 @@ Florian Krause <florian@expyriment.org>
             self.dif_var.set("")
             self.dif = None
             self.statusbar["text"] = "Ready"
-
-    def set_algorithm(self, algorithm=None):
-        """Set the hash algorithm.
-
-        Parameters
-        ----------
-        algorithm : str
-            the algorithm to be set
-
-        """
-
-        if algorithm is not None and algorithm in CRYPTOGRAPHIC_ALGORITHMS:
-            self.algorithm_var.set(algorithm)
-        self.dif_label.config(text="DIF ({0}):".format(
-            self.algorithm_var.get()))
 
     def block_gui(self):
         """Block GUI from user entry."""
@@ -252,13 +240,15 @@ Florian Krause <florian@expyriment.org>
         self.file_menu.entryconfig(2, state=tk.NORMAL)
         self.dir_button.focus()
         self.dir_button.bind("<Return>", self.set_data_directory)
-        self.generate_button["state"] = tk.DISABLED
         self.progressbar["value"] = 100
         self.checksum_list["state"] = tk.NORMAL
         self.checksum_list.delete(1.0, tk.END)
         self.checksum_list.insert(1.0, self.dif.checksums.strip("\n"))
         self.checksum_list["state"] = tk.DISABLED
+        self.dif_label.config(text="DIF ({0}):".format(
+            self.algorithm_var.get()))
         self.dif_var.set(self.dif.master_hash)
+        self.copy_button["state"] = tk.NORMAL
         self.statusbar["text"] = "Generating DIF...Done"
         self.unblock_gui()
 
@@ -270,7 +260,8 @@ Florian Krause <florian@expyriment.org>
         try:
             self.statusbar["text"] = "Opening checksums file '{0}'...".format(
                 filename)
-            self.set_algorithm(os.path.splitext(filename)[-1].strip("."))
+
+            algorithm = os.path.splitext(filename)[-1].strip(".")
             self.dif = DIF(filename, from_checksums_file=True,
                            hash_algorithm=self.algorithm_var.get())
             self.file_menu.entryconfig(2, state=tk.NORMAL)
@@ -283,7 +274,10 @@ Florian Krause <florian@expyriment.org>
             self.checksum_list.delete(1.0, tk.END)
             self.checksum_list.insert(1.0, self.dif.checksums.strip("\n"))
             self.checksum_list["state"] = tk.DISABLED
+            self.dif_label.config(text="DIF ({0}):".format(
+                algorithm))
             self.dif_var.set(self.dif.master_hash)
+            self.copy_button["state"] = tk.NORMAL
             self.statusbar["text"] = \
                 "Opening checksums file '{0}'...Done".format(filename)
         except:
@@ -298,6 +292,10 @@ Florian Krause <florian@expyriment.org>
                 defaultextension=self.algorithm_var.get(),
                 initialdir=os.path.split(self.dir_entry.get())[0],
                 initialfile=os.path.split(self.dir_entry.get())[-1]))
+
+    def copy_dif_to_clipboard(self, *args):
+        self.master.clipboard_clear()
+        self.master.clipboard_append(self.dif_var.get())
 
 
 if __name__ == "__main__":
