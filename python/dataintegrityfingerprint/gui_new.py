@@ -249,6 +249,7 @@ Florian Krause <florian@expyriment.org>
         self.dif_var.set(self.dif.master_hash)
         self.copy_button["state"] = tk.NORMAL
         self.copy_button.focus()
+        self.copy_button.bind('<Return>', self.copy_dif_to_clipboard)
         self.statusbar["text"] = "Generating DIF...Done"
         self.unblock_gui()
 
@@ -278,6 +279,7 @@ Florian Krause <florian@expyriment.org>
             self.dif_var.set(self.dif.master_hash)
             self.copy_button["state"] = tk.NORMAL
             self.copy_button.focus()
+            self.copy_button.bind('<Return>', self.copy_dif_to_clipboard)
             self.statusbar["text"] = \
                 "Opening checksums file '{0}'...Done".format(filename)
         except:
