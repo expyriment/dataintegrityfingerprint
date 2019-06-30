@@ -15,6 +15,7 @@ import sys
 import platform
 import multiprocessing
 from threading import Thread
+from .hashing import CRYPTOGRAPHIC_ALGORITHMS
 
 if sys.version[0] == '3':
     import tkinter as tk
@@ -79,7 +80,7 @@ Florian Krause <florian@expyriment.org>
         self.algorithm_menu = tk.Menu(self.menubar)
         self.algorithm_var = tk.StringVar()
         self.algorithm_var.set("sha256")
-        for algorithm in DIF.available_algorithms:
+        for algorithm in CRYPTOGRAPHIC_ALGORITHMS:
             self.algorithm_menu.add_radiobutton(label=algorithm,
                                                 value=algorithm,
                                                 command=self.set_algorithm,
@@ -203,7 +204,7 @@ Florian Krause <florian@expyriment.org>
 
         """
 
-        if algorithm is not None and algorithm in DIF.available_algorithms:
+        if algorithm is not None and algorithm in CRYPTOGRAPHIC_ALGORITHMS:
             self.algorithm_var.set(algorithm)
         self.dif_label.config(text="DIF ({0}):".format(
             self.algorithm_var.get()))
