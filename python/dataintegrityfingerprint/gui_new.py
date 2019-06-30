@@ -13,6 +13,7 @@ __author__ = 'Oliver Lindemann <oliver@expyriment.org>, ' +\
 import os
 import sys
 import platform
+import multiprocessing
 from threading import Thread
 
 if sys.version[0] == '3':
@@ -94,6 +95,20 @@ Florian Krause <florian@expyriment.org>
                                          variable=self.update_var)
         self.options_menu.add_cascade(menu=self.update_menu,
                                       label="Progress updating")
+        self.multiprocess_var = tk.IntVar()
+        self.multiprocess_var.set(0)
+        if multiprocessing.cpu_count() > 1:
+            self.multiprocess_var.set(1)
+            self.multiprocess_menu = tk.Menu(self.menubar)
+            self.multiprocess_menu.add_radiobutton(
+                label="on ({0} cores)".format(
+                    multiprocessing.cpu_count()),
+                value=1,
+                variable=self.multiprocess_var)
+            self.multiprocess_menu.add_radiobutton(
+                label="off", value=0, variable=self.multiprocess_var)
+            self.options_menu.add_cascade(menu=self.multiprocess_menu,
+                                          label="Multi-core processing")
         self.help_menu = tk.Menu(self.menubar)
         self.menubar.add_cascade(menu=self.help_menu, label="Help")
         self.help_menu.add_command(
@@ -210,7 +225,7 @@ Florian Krause <florian@expyriment.org>
     def generate_dif(self, *args):
         """Generate DIF from data directory"""
 
-        def progress(count, total, status=''):
+        def _progress(count, total, status=''):
             """Progress callback function"""
 
             percents = int(round(100.0 * count / float(total), 1))
@@ -221,12 +236,18 @@ Florian Krause <florian@expyriment.org>
 
         self.block_gui()
         self.statusbar["text"] = "Generating DIF..."
-        self.dif = DIF(self.dir_entry.get(),
-                       hash_algorithm=self.algorithm_var.get())
-        if self.update_var.get() == 1:
-            self.dif.generate(progress=progress)
+        if self.multiprocess_var.get() == 1:
+            multiprocessing = True
         else:
-            self.dif.generate()
+            multiprocessing = False
+        self.dif = DIF(self.dir_entry.get(),
+                       hash_algorithm=self.algorithm_var.get(),
+                       multiprocessing=multiprocessing)
+        if self.update_var.get() == 1:
+            progress=_progress
+        else:
+            progress=None
+        self.dif.generate(progress=progress)
         self.file_menu.entryconfig(2, state=tk.NORMAL)
         self.dir_button.focus()
         self.dir_button.bind("<Return>", self.set_data_directory)
