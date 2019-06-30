@@ -45,6 +45,8 @@ Florian Krause <florian@expyriment.org>
 """
         self.dif = None
         self.create_widgets()
+        self.dir_button.focus()
+        self.dir_button.bind("<Return>", self.set_data_directory)
 
     def create_widgets(self):
         """Create GUI widgets."""
@@ -77,13 +79,21 @@ Florian Krause <florian@expyriment.org>
         self.algorithm_var = tk.StringVar()
         self.algorithm_var.set("sha256")
         for algorithm in DIF.available_algorithms:
-            self.algorithm_menu.add_radiobutton(
-                label=algorithm, value=algorithm,
-                command=lambda: self.dif_label.config(text="DIF ({0}):".format(
-                    self.algorithm_var.get())),
-                variable=self.algorithm_var)
+            self.algorithm_menu.add_radiobutton(label=algorithm,
+                                                value=algorithm,
+                                                command=self.set_algorithm,
+                                                variable=self.algorithm_var)
         self.options_menu.add_cascade(menu=self.algorithm_menu,
                                       label="Hash algorithm")
+        self.update_menu = tk.Menu(self.menubar)
+        self.update_var = tk.IntVar()
+        self.update_var.set(1)
+        self.update_menu.add_radiobutton(label="on", value=1,
+                                         variable=self.update_var)
+        self.update_menu.add_radiobutton(label="off (faster)", value=0,
+                                         variable=self.update_var)
+        self.options_menu.add_cascade(menu=self.update_menu,
+                                      label="Progress updating")
         self.help_menu = tk.Menu(self.menubar)
         self.menubar.add_cascade(menu=self.help_menu, label="Help")
         self.help_menu.add_command(
@@ -98,7 +108,10 @@ Florian Krause <florian@expyriment.org>
         self.frame1.grid_columnconfigure(1, weight=1)
         self.dir_label = ttk.Label(self.frame1, text="Data directory:")
         self.dir_label.grid(row=0, column=0)
-        self.dir_entry = ttk.Entry(self.frame1, state="readonly")
+        self.dir_var = tk.StringVar()
+        self.dir_var.set("")
+        self.dir_entry = ttk.Entry(self.frame1, textvariable=self.dir_var,
+                                   state="readonly")
         self.dir_entry.grid(row=0, column=1, sticky="WE") #, padx=5)
         self.dir_button = ttk.Button(self.frame1, text="Browse",
                                      command=self.set_data_directory)
@@ -136,37 +149,65 @@ Florian Krause <florian@expyriment.org>
         self.dif_label = ttk.Label(self.frame2, text="DIF ({0}):".format(
             self.algorithm_var.get()))
         self.dif_label.grid(row=0, column=0)
-        self.dif_entry = ttk.Entry(self.frame2, state="readonly")
+        self.dif_var = tk.StringVar()
+        self.dif_var.set("")
+        self.dif_entry = ttk.Entry(self.frame2, textvariable=self.dif_var,
+                                   state="readonly")
         self.dif_entry.grid(row=0, column=1, sticky="NSWE")
 
         # Status bar
-        self.statusbar = ttk.Label(self.master, text="Ready", border=1,
+        self.statusbar = ttk.Label(self.master, text="", border=1,
                                    relief=tk.SUNKEN, anchor=tk.W)
         self.statusbar.grid(row=4, column=0, sticky="WE")
 
-    def set_data_directory(self):
+    def set_data_directory(self, *args):
         "Set the data directory."""
 
         data_dir = filedialog.askdirectory()
         if data_dir != "":
-            # Update GUI
             self.file_menu.entryconfig(2, state=tk.DISABLED)
-            self.dir_entry["state"] = tk.NORMAL
-            self.dir_entry.delete(0, tk.END)
-            self.dir_entry.insert(0, data_dir)
-            self.dir_entry["state"] = "readonly"
+            self.dir_var.set(data_dir)
+            self.generate_button["state"] = tk.NORMAL
+            self.generate_button.focus()
+            self.generate_button.bind('<Return>', self.generate_dif)
             self.progressbar["value"] = 0
             self.checksum_list["state"] = tk.NORMAL
             self.checksum_list.delete(1.0, tk.END)
             self.checksum_list["state"] = tk.DISABLED
-            self.dif_entry["state"] = tk.NORMAL
-            self.dif_entry.delete(0, tk.END)
-            self.dif_entry["state"] = "readonly"
-            self.generate_button["state"] = tk.NORMAL
-            self.statusbar["text"] = "Ready"
+            self.dif_var.set("")
             self.dif = None
+            self.statusbar["text"] = "Ready"
 
-    def generate_dif(self):
+    def set_algorithm(self, algorithm=None):
+        """Set the hash algorithm.
+
+        Parameters
+        ----------
+        algorithm : str
+            the algorithm to be set
+
+        """
+
+        if algorithm is not None and algorithm in DIF.available_algorithms:
+            self.algorithm_var.set(algorithm)
+        self.dif_label.config(text="DIF ({0}):".format(
+            self.algorithm_var.get()))
+
+    def block_gui(self):
+        """Block GUI from user entry."""
+
+        self.file_menu.entryconfig(1, state=tk.DISABLED)
+        self.options_menu.entryconfig(1, state=tk.DISABLED)
+        self.progressbar.grab_set()
+
+    def unblock_gui(self):
+        """Unblock GUI from user entry."""
+
+        self.file_menu.entryconfig(1, state=tk.NORMAL)
+        self.options_menu.entryconfig(1, state=tk.NORMAL)
+        self.progressbar.grab_release()
+
+    def generate_dif(self, *args):
         """Generate DIF from data directory"""
 
         def progress(count, total, status=''):
@@ -178,73 +219,61 @@ Florian Krause <florian@expyriment.org>
                 "Generating DIF from data directory...{0}% ({1})".format(
                     percents, status)
 
-        # Block GUI
-        self.file_menu.entryconfig(1, state=tk.DISABLED)
-        self.options_menu.entryconfig(1, state=tk.DISABLED)
-        self.progressbar.grab_set()
-
-        # Calculate DIF from data directory
+        self.block_gui()
+        self.statusbar["text"] = "Generating DIF..."
         self.dif = DIF(self.dir_entry.get(),
                        hash_algorithm=self.algorithm_var.get())
-        self.dif.generate(progress=progress)
-
-        # Update GUI
+        if self.update_var.get() == 1:
+            self.dif.generate(progress=progress)
+        else:
+            self.dif.generate()
+        self.file_menu.entryconfig(2, state=tk.NORMAL)
+        self.dir_button.focus()
+        self.dir_button.bind("<Return>", self.set_data_directory)
+        self.generate_button["state"] = tk.DISABLED
+        self.progressbar["value"] = 100
         self.checksum_list["state"] = tk.NORMAL
         self.checksum_list.delete(1.0, tk.END)
         self.checksum_list.insert(1.0, self.dif.checksums.strip("\n"))
         self.checksum_list["state"] = tk.DISABLED
-        self.dif_entry["state"] = tk.NORMAL
-        self.dif_entry.delete(0, tk.END)
-        self.dif_entry.insert(0, self.dif.master_hash)
-        self.dif_entry["state"] = "readonly"
-        self.generate_button["state"] = tk.DISABLED
-        self.file_menu.entryconfig(2, state=tk.NORMAL)
-        self.statusbar["text"] = "Generating DIF from data directory...Done"
-
-        # Unblock GUI
-        self.file_menu.entryconfig(1, state=tk.NORMAL)
-        self.options_menu.entryconfig(1, state=tk.NORMAL)
-        self.progressbar.grab_release()
+        self.dif_var.set(self.dif.master_hash)
+        self.statusbar["text"] = "Generating DIF...Done"
+        self.unblock_gui()
 
     def open_checksums(self, *args):
         """Open checksums file."""
 
         filename = filedialog.askopenfilename()
-        algorithm = os.path.splitext(filename)[-1]
+        self.block_gui()
         try:
-            self.statusbar["text"] = "Generating DIF from checksums file..."
-
-            # Calculate DIF from checksums file
+            self.statusbar["text"] = "Opening checksums file '{0}'...".format(
+                filename)
+            self.set_algorithm(os.path.splitext(filename)[-1].strip("."))
             self.dif = DIF(filename, from_checksums_file=True,
-                           hash_algorithm=algorithm.strip("."))
-
-            # Update GUI
-            self.dir_entry["state"] = tk.NORMAL
-            self.dir_entry.delete(0, tk.END)
-            self.dir_entry["state"] = "readonly"
-            self.progressbar["value"] = 100
+                           hash_algorithm=self.algorithm_var.get())
+            self.file_menu.entryconfig(2, state=tk.NORMAL)
+            self.dir_var.set("")
+            self.dir_button.focus()
+            self.dir_button.bind("<Return>", self.set_data_directory)
             self.generate_button["state"] = tk.DISABLED
+            self.progressbar["value"] = 100
             self.checksum_list["state"] = tk.NORMAL
             self.checksum_list.delete(1.0, tk.END)
             self.checksum_list.insert(1.0, self.dif.checksums.strip("\n"))
             self.checksum_list["state"] = tk.DISABLED
-            self.dif_entry["state"] = tk.NORMAL
-            self.dif_entry.delete(0, tk.END)
-            self.dif_entry.insert(0, self.dif.master_hash)
-            self.dif_entry["state"] = "readonly"
-            self.generate_button["state"] = tk.DISABLED
-            self.file_menu.entryconfig(2, state=tk.NORMAL)
+            self.dif_var.set(self.dif.master_hash)
             self.statusbar["text"] = \
-                "Generating DIF from checksums file...Done"
+                "Opening checksums file '{0}'...Done".format(filename)
         except:
             pass
+        self.unblock_gui()
 
     def save_checksums(self, *args):
         "Save checksums file."""
 
         if self.checksum_list.get(1.0, tk.END).strip("\n") != "":
             self.dif.save_checksums(filename=filedialog.asksaveasfilename(
-                defaultextension="sha256",
+                defaultextension=self.algorithm_var.get(),
                 initialdir=os.path.split(self.dir_entry.get())[0],
                 initialfile=os.path.split(self.dir_entry.get())[-1]))
 
