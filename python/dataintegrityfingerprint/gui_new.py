@@ -48,7 +48,6 @@ Florian Krause <florian@expyriment.org>
         self.dif = None
         self.create_widgets()
         self.dir_button.focus()
-        self.dir_button.bind("<Return>", self.set_data_directory)
 
     def create_widgets(self):
         """Create GUI widgets."""
@@ -188,7 +187,6 @@ Florian Krause <florian@expyriment.org>
             self.dir_var.set(data_dir)
             self.generate_button["state"] = tk.NORMAL
             self.generate_button.focus()
-            self.generate_button.bind('<Return>', self.generate_dif)
             self.progressbar["value"] = 0
             self.checksum_list["state"] = tk.NORMAL
             self.checksum_list.delete(1.0, tk.END)
@@ -238,7 +236,6 @@ Florian Krause <florian@expyriment.org>
             progress=None
         self.dif.generate(progress=progress)
         self.file_menu.entryconfig(2, state=tk.NORMAL)
-        self.dir_button.bind("<Return>", self.set_data_directory)
         self.progressbar["value"] = 100
         self.checksum_list["state"] = tk.NORMAL
         self.checksum_list.delete(1.0, tk.END)
@@ -249,7 +246,6 @@ Florian Krause <florian@expyriment.org>
         self.dif_var.set(self.dif.master_hash)
         self.copy_button["state"] = tk.NORMAL
         self.copy_button.focus()
-        self.copy_button.bind('<Return>', self.copy_dif_to_clipboard)
         self.statusbar["text"] = "Generating DIF...Done"
         self.unblock_gui()
 
@@ -267,7 +263,6 @@ Florian Krause <florian@expyriment.org>
                            hash_algorithm=self.algorithm_var.get())
             self.file_menu.entryconfig(2, state=tk.NORMAL)
             self.dir_var.set("")
-            self.dir_button.bind("<Return>", self.set_data_directory)
             self.generate_button["state"] = tk.DISABLED
             self.progressbar["value"] = 100
             self.checksum_list["state"] = tk.NORMAL
@@ -279,7 +274,6 @@ Florian Krause <florian@expyriment.org>
             self.dif_var.set(self.dif.master_hash)
             self.copy_button["state"] = tk.NORMAL
             self.copy_button.focus()
-            self.copy_button.bind('<Return>', self.copy_dif_to_clipboard)
             self.statusbar["text"] = \
                 "Opening checksums file '{0}'...Done".format(filename)
         except:
@@ -299,12 +293,13 @@ Florian Krause <florian@expyriment.org>
         self.master.clipboard_clear()
         self.master.clipboard_append(self.dif_var.get())
 
-
 if __name__ == "__main__":
     root = tk.Tk()
     #if platform.system() == "Linux":
         #style = Style()
         #style.theme_use("clam")
+    root.bind_class("TButton", "<Return>",
+                    lambda event: event.widget.invoke())
     root.option_add('*tearOff', tk.FALSE)
     root.geometry("1024x600")
     root.grid_columnconfigure(0, weight=1)
