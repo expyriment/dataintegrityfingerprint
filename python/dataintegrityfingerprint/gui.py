@@ -172,7 +172,7 @@ Florian Krause <florian@expyriment.org>
         self.dif_var = tk.StringVar()
         self.dif_var.set("")
         self.dif_entry = ttk.Entry(self.frame2, textvariable=self.dif_var,
-                                   takefocus=0, foreground="green",
+                                   takefocus=0, foreground="black",
                                    state=tk.DISABLED)
         self.dif_entry.grid(row=0, column=1, sticky="NSWE")
         self.copy_button = ttk.Button(self.frame2, text="Copy",
