@@ -1,172 +1,308 @@
 #!/usr/bin/env python3
 
-from __future__ import absolute_import, unicode_literals
+"""Data Integrity Fingerprint GUI.
 
-try:
-    import tkinter as tk
-    from tkinter.filedialog import askdirectory, asksaveasfilename
-except:
-    # proably python 2
-    import Tkinter as tk
-    from tkFileDialog import askdirectory, asksaveasfile
+A GUI for the Data Integrity Fingerprint (DIF) Python reference implementation.
 
-from .dif import DataIntegrityFingerprint as DIF
+"""
+
+__author__ = 'Oliver Lindemann <oliver@expyriment.org>, ' +\
+             'Florian Krause <florian@expyriment.org>'
+
+
+import os
+import sys
+import platform
+import multiprocessing
+from threading import Thread
 from .hashing import CRYPTOGRAPHIC_ALGORITHMS
 
+if sys.version[0] == '3':
+    import tkinter as tk
+    import tkinter.ttk as ttk
+    from tkinter import filedialog, messagebox
+    from tkinter.scrolledtext import ScrolledText
+else:
+    import Tkinter as tk
+    import ttk
+    import tkFileDialog as filedialog
+    import tkMessageBox as messagebox
+    from ScrolledText import ScrolledText
 
-class TK_GUI(tk.Tk):
-    def __init__(self, root):
+from . import DataIntegrityFingerprint as DIF
 
-        self.directory = None
+
+class App(ttk.Frame):
+    def __init__(self, master, *args, **kwargs):
+        ttk.Frame.__init__(self, master, *args, **kwargs)
+        self.master = master
+        self.master.title("Data Integrity Fingerprint (DIF)")
+        self.about_text = """Data Integrity Fingerprint (DIF)
+
+Reference Python implementation
+
+Authors:
+Oliver Lindemann <oliver@expyriment.org>
+Florian Krause <florian@expyriment.org>
+"""
         self.dif = None
-        self._hashlist_calculated = False
+        self.create_widgets()
+        self.dir_button.focus()
 
-        # GUI
-        tk.Tk.__init__(self, root)
-        self.root = root
-        self.resizable(width=False,height=False)
-        self.protocol('WM_DELETE_WINDOW', self.close)
+    def create_widgets(self):
+        """Create GUI widgets."""
 
-        self.title('Data Integrity Fingerprint GUI')
+        # Menu
+        self.menubar = tk.Menu(self.master)
+        if platform.system() == "Darwin":
+            modifier = "Command"
+            self.apple_menu = tk.Menu(self.menubar, name="apple")
+            self.menubar.add_cascade(menu=self.apple_menu)
+            self.apple_menu.add_command(
+                label="About Data Integrity Fingerprint (DIF)",
+                command=lambda: messagebox.showinfo("About", self.about_text))
+        else:
+            modifier = "Control"
+        self.file_menu = tk.Menu(self.menubar)
+        self.menubar.add_cascade(menu=self.file_menu, label="File")
+        self.file_menu.add_command(label="Open checksums",
+                                   command=self.open_checksums,
+                                   accelerator="{0}-O".format(modifier))
+        self.master.bind("<{0}-o>".format(modifier), self.open_checksums)
+        self.file_menu.add_command(label="Save checksums",
+                                   command=self.save_checksums,
+                                   accelerator="{0}-S".format(modifier))
+        self.master.bind("<{0}-s>".format(modifier), self.save_checksums)
+        self.file_menu.entryconfig(2, state=tk.DISABLED)
+        self.options_menu = tk.Menu(self.menubar)
+        self.menubar.add_cascade(menu=self.options_menu, label="Options")
+        self.algorithm_menu = tk.Menu(self.menubar)
+        self.algorithm_var = tk.StringVar()
+        self.algorithm_var.set("sha256")
+        for algorithm in CRYPTOGRAPHIC_ALGORITHMS:
+            self.algorithm_menu.add_radiobutton(label=algorithm,
+                                                value=algorithm,
+                                                variable=self.algorithm_var)
+        self.options_menu.add_cascade(menu=self.algorithm_menu,
+                                      label="Hash algorithm")
+        self.update_menu = tk.Menu(self.menubar)
+        self.update_var = tk.IntVar()
+        self.update_var.set(1)
+        self.update_menu.add_radiobutton(label="on", value=1,
+                                         variable=self.update_var)
+        self.update_menu.add_radiobutton(label="off (faster)", value=0,
+                                         variable=self.update_var)
+        self.options_menu.add_cascade(menu=self.update_menu,
+                                      label="Progress updating")
+        self.multiprocess_var = tk.IntVar()
+        self.multiprocess_var.set(0)
+        if multiprocessing.cpu_count() > 1:
+            self.multiprocess_var.set(1)
+            self.multiprocess_menu = tk.Menu(self.menubar)
+            self.multiprocess_menu.add_radiobutton(
+                label="on ({0} cores)".format(
+                    multiprocessing.cpu_count()),
+                value=1,
+                variable=self.multiprocess_var)
+            self.multiprocess_menu.add_radiobutton(
+                label="off", value=0, variable=self.multiprocess_var)
+            self.options_menu.add_cascade(menu=self.multiprocess_menu,
+                                          label="Multi-core processing")
+        self.help_menu = tk.Menu(self.menubar)
+        self.menubar.add_cascade(menu=self.help_menu, label="Help")
+        self.help_menu.add_command(
+            label="About",
+            command=lambda: messagebox.showinfo("About", self.about_text))
 
-        # menu
-        menubar = tk.Menu(self)
-        filemenu = tk.Menu(menubar, tearoff=0)
-        filemenu.add_command(label="Select Folder", command=self.select_folder)
-        filemenu.add_separator()
-        filemenu.add_command(label="Make Hashes",
-                             command=self.make_hashes, state=tk.DISABLED)
-        filemenu.add_command(label="Save Hash List", command=self.save,
-                        state=tk.DISABLED)
-        filemenu.add_separator()
-        filemenu.add_command(label="Exit", command=self.close)
-        menubar.add_cascade(label="Data", menu=filemenu)
+        self.master["menu"] = self.menubar
 
-        self.hash_menu = tk.Menu(menubar, tearoff=0)
+        # Main window
+        self.frame1 = ttk.Frame(self.master)
+        self.frame1.grid(row=0, column=0, sticky="NSWE") #, padx=5, pady=5)
+        self.frame1.grid_columnconfigure(1, weight=1)
+        self.dir_label = ttk.Label(self.frame1, text="Data directory:")
+        self.dir_label.grid(row=0, column=0)
+        self.dir_var = tk.StringVar()
+        self.dir_var.set("")
+        self.dir_entry = ttk.Entry(self.frame1, textvariable=self.dir_var,
+                                   state=tk.DISABLED)
+        self.dir_entry.grid(row=0, column=1, sticky="WE") #, padx=5)
+        self.dir_button = ttk.Button(self.frame1, text="Browse",
+                                     command=self.set_data_directory)
+        self.dir_button.grid(row=0, column=2)
+        self.generate_button = ttk.Button(
+            self.frame1, text="Generate DIF",
+            command=lambda: Thread(target=self.generate_dif).start(),
+            state=tk.DISABLED)
+        self.generate_button.grid(row=0, column=3)
 
-        aboutmenu = tk.Menu(menubar, tearoff=0)
-        aboutmenu.add_command(label="About...", command=self.about)
-        menubar.add_cascade(label="About", menu=aboutmenu)
-        self.config(menu=menubar)
-        self.filemenu = filemenu
+        self.progressbar = ttk.Progressbar(self.master)
+        self.progressbar.grid(row=1, column=0, sticky="NSWE")
 
-        # Frame 1
-        frame1 = tk.Frame(self)
-        frame1.pack(side = tk.TOP)
+        self.container = ttk.Frame(self.master, borderwidth=1,
+                                   relief=tk.SUNKEN)
+        self.checksum_list = tk.Text(self.container, wrap="none",
+                                     borderwidth=0, state=tk.DISABLED)
+        self.vertical_scroll = ttk.Scrollbar(self.container, orient="vertical",
+                                             command=self.checksum_list.yview)
+        self.horizontal_scroll = ttk.Scrollbar(
+            self.container, orient="horizontal",
+            command=self.checksum_list.xview)
+        self.checksum_list.configure(yscrollcommand=self.vertical_scroll.set,
+                                     xscrollcommand=self.horizontal_scroll.set)
+        self.checksum_list.grid(row=0, column=0, sticky="NSWE")
+        self.vertical_scroll.grid(row=0, column=1, sticky="NS")
+        self.horizontal_scroll.grid(row=1, column=0, sticky="EW")
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
+        self.container.grid(row=2, column=0, sticky="NSWE")
 
-        ##  folder label
-        frame_folder = tk.Frame(frame1)
-        frame_folder.pack(side=tk.TOP)
-        tk.Label(frame_folder, text="Folder:", width=7,
-                            anchor=tk.W).pack(side=tk.LEFT)
-        self.foldername = tk.StringVar()
-        label_folder = tk.Label(frame_folder,
-                textvariable=self.foldername, anchor=tk.W, width=80)
-        label_folder.pack(side=tk.RIGHT)
+        self.frame2 = ttk.Frame(self.master)
+        self.frame2.grid(row=3, column=0, sticky="NSWE")
+        self.frame2.grid_columnconfigure(1, weight=1)
+        self.dif_label = ttk.Label(self.frame2, text="DIF ({0}):".format(
+            self.algorithm_var.get()))
+        self.dif_label.grid(row=0, column=0)
+        self.dif_var = tk.StringVar()
+        self.dif_var.set("")
+        self.dif_entry = ttk.Entry(self.frame2, textvariable=self.dif_var,
+                                   state=tk.DISABLED)
+        self.dif_entry.grid(row=0, column=1, sticky="NSWE")
+        self.copy_button = ttk.Button(self.frame2, text="Copy",
+                                      command=self.copy_dif_to_clipboard,
+                                      state=tk.DISABLED)
+        self.copy_button.grid(row=0, column=2)
 
-        ## master hash frame (bottom)
-        frame_master = tk.Frame(frame1)
-        frame_master.pack(side = tk.BOTTOM)
-        tk.Label(frame_master, text="Master hash:", width=11,
-                            anchor=tk.W).pack(side=tk.LEFT)
-        self.master_hash_text = tk.Text(frame_master, height=1,
-                            borderwidth=0, width=85, relief=tk.SUNKEN)
-        self.master_hash_text.pack(side=tk.RIGHT)
+        # Status bar
+        self.statusbar = ttk.Label(self.master, text="", border=1,
+                                   relief=tk.SUNKEN, anchor=tk.W)
+        self.statusbar.grid(row=4, column=0, sticky="WE")
 
-        ## text with Scrollbar
-        xscrollbar = tk.Scrollbar(frame1, orient=tk.HORIZONTAL)
-        xscrollbar.pack(side=tk.BOTTOM, fill=tk.X)
-        yscrollbar = tk.Scrollbar(frame1, orient=tk.VERTICAL)
-        yscrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.text_output = tk.Text(frame1, height=20, width=80,
-                                   borderwidth=3, relief="sunken",
-                                   yscrollcommand=yscrollbar.set,
-                                   xscrollcommand=xscrollbar.set)
-        self.text_output.config(font=("courier", 10), undo=True, wrap=tk.NONE)
-        self.text_output.pack( side = tk.TOP, fill = tk.BOTH )
-        xscrollbar.config( command = self.text_output.xview)
-        yscrollbar.config( command = self.text_output.yview)
+    def set_data_directory(self, *args):
+        "Set the data directory."""
 
-        # Frame2: Button frame
-        frame_btn = tk.Frame(self)
-        frame_btn.pack(side = tk.BOTTOM, fill = tk.X)
+        data_dir = filedialog.askdirectory()
+        if data_dir != "":
+            self.file_menu.entryconfig(2, state=tk.DISABLED)
+            self.dir_var.set(data_dir)
+            self.generate_button["state"] = tk.NORMAL
+            self.generate_button.focus()
+            self.progressbar["value"] = 0
+            self.checksum_list["state"] = tk.NORMAL
+            self.checksum_list.delete(1.0, tk.END)
+            self.checksum_list["state"] = tk.DISABLED
+            self.dif_var.set("")
+            self.dif = None
+            self.statusbar["text"] = "Ready"
 
-        self.algorithm = tk.StringVar()
-        self.algorithm.set("sha256") # initialize
-        tk.Label(frame_btn, text="Hash algorithm:", width=13,
-                            anchor=tk.W).pack(side=tk.LEFT)
-        self.alg_menu = tk.OptionMenu(frame_btn, self.algorithm,
-                                 *CRYPTOGRAPHIC_ALGORITHMS,
-                                 command=self.change_algorithm)
-        self.alg_menu.setvar()
-        self.alg_menu.pack(side = tk.LEFT, anchor=tk.W)
+    def block_gui(self):
+        """Block GUI from user entry."""
 
-        bbutton= tk.Button(frame_btn, text="Select Folder",
-                            command=self.select_folder, height=2, width=10)
-        bbutton.pack(side = tk.RIGHT, fill=tk.X)
+        self.file_menu.entryconfig(1, state=tk.DISABLED)
+        self.options_menu.entryconfig(1, state=tk.DISABLED)
+        self.progressbar.grab_set()
 
-        self.recalc_btn = tk.Button(frame_btn, text="Make Hashes",
-                                        command=self.make_hashes, height=2,
-                                    width=10, state = tk.DISABLED)
-        self.recalc_btn.pack(side = tk.RIGHT, fill=tk.X)
+    def unblock_gui(self):
+        """Unblock GUI from user entry."""
 
+        self.file_menu.entryconfig(1, state=tk.NORMAL)
+        self.options_menu.entryconfig(1, state=tk.NORMAL)
+        self.progressbar.grab_release()
 
-    def select_folder(self):
-        tk.Tk().withdraw()
-        d = askdirectory()
-        if len(d)>1:
-            self.directory = d
-            self.foldername.set(d)
-            self.title("DIF GUI: " + str(d))
-            self.update()
+    def generate_dif(self, *args):
+        """Generate DIF from data directory"""
 
-            self.make_hashes()
+        def _progress(count, total, status=''):
+            """Progress callback function"""
 
+            percents = int(round(100.0 * count / float(total), 1))
+            self.progressbar["value"] = percents
+            self.statusbar["text"] = \
+                "Generating DIF from data directory...{0}% ({1})".format(
+                    percents, status)
 
-    def make_hashes(self):
-        if self.directory is not None:
-            self.master_hash_text.delete(1.0, tk.END)
-            self.text_output.delete(1.0, tk.END)
-            self.text_output.insert(tk.INSERT, "Please wait....")
-            self.update()
+        self.block_gui()
+        self.statusbar["text"] = "Generating DIF..."
+        if self.multiprocess_var.get() == 1:
+            multiprocessing = True
+        else:
+            multiprocessing = False
+        self.dif = DIF(self.dir_entry.get(),
+                       hash_algorithm=self.algorithm_var.get(),
+                       multiprocessing=multiprocessing)
+        if self.update_var.get() == 1:
+            progress=_progress
+        else:
+            progress=None
+        self.dif.generate(progress=progress)
+        self.file_menu.entryconfig(2, state=tk.NORMAL)
+        self.progressbar["value"] = 100
+        self.checksum_list["state"] = tk.NORMAL
+        self.checksum_list.delete(1.0, tk.END)
+        self.checksum_list.insert(1.0, self.dif.checksums.strip("\n"))
+        self.checksum_list["state"] = tk.DISABLED
+        self.dif_label.config(text="DIF ({0}):".format(
+            self.algorithm_var.get()))
+        self.dif_var.set(self.dif.master_hash)
+        self.copy_button["state"] = tk.NORMAL
+        self.copy_button.focus()
+        self.statusbar["text"] = "Generating DIF...Done"
+        self.unblock_gui()
 
-            self.dif = DIF(data = self.directory,
-                           hash_algorithm=self.algorithm.get())
+    def open_checksums(self, *args):
+        """Open checksums file."""
 
-            self.text_output.delete(1.0, tk.END)
-            self.text_output.insert(tk.INSERT, self.dif.checksums)
-            self.master_hash_text.insert(tk.INSERT,
-                                        "{0}".format(self.dif.master_hash))
-            self._hashlist_calculated = True
-            self.filemenu.entryconfigure(3, state=tk.ACTIVE)  # save
-            self.recalc_btn.config(state=tk.DISABLED) # re-calc
-            self.filemenu.entryconfigure(2, state=tk.DISABLED) # re-calc
+        filename = filedialog.askopenfilename()
+        self.block_gui()
+        try:
+            self.statusbar["text"] = "Opening checksums file '{0}'...".format(
+                filename)
 
-    def change_algorithm(self, new_alogo):
-        if self._hashlist_calculated:
-            self.recalc_btn.config(state= tk.ACTIVE)
-            self.filemenu.entryconfigure(2, state = tk.ACTIVE)
+            algorithm = os.path.splitext(filename)[-1].strip(".")
+            self.dif = DIF(filename, from_checksums_file=True,
+                           hash_algorithm=self.algorithm_var.get())
+            self.file_menu.entryconfig(2, state=tk.NORMAL)
+            self.dir_var.set("")
+            self.generate_button["state"] = tk.DISABLED
+            self.progressbar["value"] = 100
+            self.checksum_list["state"] = tk.NORMAL
+            self.checksum_list.delete(1.0, tk.END)
+            self.checksum_list.insert(1.0, self.dif.checksums.strip("\n"))
+            self.checksum_list["state"] = tk.DISABLED
+            self.dif_label.config(text="DIF ({0}):".format(
+                algorithm))
+            self.dif_var.set(self.dif.master_hash)
+            self.copy_button["state"] = tk.NORMAL
+            self.copy_button.focus()
+            self.statusbar["text"] = \
+                "Opening checksums file '{0}'...Done".format(filename)
+        except:
+            pass
+        self.unblock_gui()
 
-    def close(self):
-        quit()
+    def save_checksums(self, *args):
+        "Save checksums file."""
 
-    def about(self):
-        #todo
-        pass
+        if self.checksum_list.get(1.0, tk.END).strip("\n") != "":
+            self.dif.save_checksums(filename=filedialog.asksaveasfilename(
+                defaultextension=self.algorithm_var.get(),
+                initialdir=os.path.split(self.dir_entry.get())[0],
+                initialfile=os.path.split(self.dir_entry.get())[-1]))
 
-    def save(self):
-        if self.dif is None:
-            return
-        filetypes = list(map(lambda x: (x, "."+x), CRYPTOGRAPHIC_ALGORITHMS))
-        filetypes.append(("All Files", "*.*"))
-        default = (self.algorithm.get(), "."+self.algorithm.get())
-        filetypes.remove(default)
-        filetypes.insert(0, default)
-        flname = asksaveasfilename(defaultextension=default[1],
-                                filetypes=filetypes)
-        if len(flname)>0:
-            self.dif.save_checksums(flname)
+    def copy_dif_to_clipboard(self, *args):
+        self.master.clipboard_clear()
+        self.master.clipboard_append(self.dif_var.get())
 
 if __name__ == "__main__":
-    app = TK_GUI(None)
+    root = tk.Tk()
+    #if platform.system() == "Linux":
+        #style = Style()
+        #style.theme_use("clam")
+    root.bind_class("TButton", "<Return>",
+                    lambda event: event.widget.invoke())
+    root.option_add('*tearOff', tk.FALSE)
+    root.geometry("1024x600")
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_rowconfigure(2, weight=1)
+    app = App(root)
     app.mainloop()
