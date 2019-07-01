@@ -53,9 +53,9 @@ class DataIntegrityFingerprint:
         Note
         ----
         We do not suggest to use non-cryptographic algorithms. Non-cryptographic
-        algorithms are much faster but secure against tampering. Only use this
-        algorithms for checks for technical file damages and in cases in file
-        integrity is not a concern.
+        algorithms are, while much faster, not secure (e.g. can be tempered
+        with). Only use these algorithms to check for technical file damage and
+        in cases security is not of critical concern.
 
         """
 
