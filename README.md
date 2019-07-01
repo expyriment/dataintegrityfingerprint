@@ -5,6 +5,9 @@ Data Integrity Fingerprint (DIF)
 
 Oliver Lindemann (oliver@expyriment.org) & Florian Krause (florian@expyriment.org)
 
+General Documentation: http://expyriment.github.io/dataintegrityfingerprint
+
+
 DIF procedure
 -------------
 
@@ -37,3 +40,11 @@ cd <DATA_FOLDER>
 export LC_ALL=C
 find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///' | shasum -a 256 | cut -d' ' -f1
 ```
+
+
+
+Available Implementations
+-------------------------
+
+* Python 2/3:  [dataintegrityfingerprint-python](https://github.com/expyriment/dataintegrityfingerprint-python)
+* R:  [dataintegrityfingerprint-r](https://github.com/expyriment/dataintegrityfingerprint-r)
