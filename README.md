@@ -16,9 +16,11 @@ Available Implementations
 DIF procedure
 -------------
 
-1. For every file `file` in a directory `data` (that is part of the dataset):
+1. Choose a (cryptographic) hash algorithm named `$ALGORITHM` (e.g. `SHA-256`)
 
-    a. Calculate the hexadecimal digest (lower case letters) of the SHA-256
+2. For every file `file` in a directory `data` (that is part of the dataset):
+
+    a. Calculate the hexadecimal digest (lower case letters) of the `$ALGORITHM`
        hash of the contents of `file` (hereafter referred to as `<hash>`)
 
     b. Calculate the relative path in Unix notation (i.e. forward slashes) to
@@ -31,15 +33,18 @@ DIF procedure
        UTF-8 shall be replaced with a U+003F question mark character;
        `checksums` shall have no empty lines)
 
-2. Sort the lines in `checksums` in ascending Unicode code point order (i.e.,
-   sorting capital letters first or byte-wise sorting, no sorting based on the Unicode collation algorithm)
+3. Sort the lines in `checksums` in ascending Unicode code point order (i.e.,
+   byte-wise sorting, NOT based on the Unicode collation algorithm)
 
-3. Calculate the hexadecimal digest of the SHA-256 hash of the sorted
-   contents of `checksums`
+4. Calculate the hexadecimal digest of the `$ALGORITHM` hash of the sorted
+   contents of `checksums` (hereafter referred to as `<masterhash>`)
+   
+5. Create the DIF as `<$ALGORITHM/<masterhash>`
 
 
 ### Note
-On a Unix(-like) system with a UTF-8 locale, the procedure is equivalent to:
+On a Unix(-like) system with a UTF-8 locale, the procedure to create a DIF
+based on SHA-256 is equivalent to:
 ```
 cd <DATA_FOLDER>
 export LC_ALL=C
