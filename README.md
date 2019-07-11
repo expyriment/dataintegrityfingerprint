@@ -1,4 +1,4 @@
-Data Integrity Fingerprint (DIF)
+Data Integrity Fingerprint (DIF) 
 ================================
 
 *Released under the MIT License*
@@ -13,8 +13,8 @@ Available Implementations
 * R:  [dataintegrityfingerprint-r](https://github.com/expyriment/dataintegrityfingerprint-r)
 
 
-DIF procedure
--------------
+DIF specification
+-------------------
 
 1. Choose a (cryptographic) hash function named `$FUNCTION` (e.g. `SHA-256`)
 
