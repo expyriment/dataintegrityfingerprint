@@ -1,20 +1,8 @@
 Data Integrity Fingerprint (DIF) 
 ================================
 
-*Released under the MIT License*
-
-Oliver Lindemann (oliver@expyriment.org) & Florian Krause (florian@expyriment.org)
-
-
-Available Implementations
--------------------------
-
-* Python 2/3:  [dataintegrityfingerprint-python](https://github.com/expyriment/dataintegrityfingerprint-python)
-* R:  [dataintegrityfingerprint-r](https://github.com/expyriment/dataintegrityfingerprint-r)
-
-
-DIF specification
--------------------
+Specification
+--------------
 
 1. Choose a (cryptographic) hash function named `$FUNCTION` (e.g. `SHA-256`)
 
@@ -44,11 +32,12 @@ DIF specification
    a U+002F forward slash followed by `<masterhash>`)
 
 
-### Note
-On a Unix(-like) system with a UTF-8 locale, the procedure to create a DIF
-based on SHA-256 is equivalent to:
-```
-cd <DATA_FOLDER>
-export LC_ALL=C
-find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///' | shasum -a 256 | cut -d' ' -f1 | sed -e 's/^/sha256\./'
-```
+Available Implementations
+-------------------------
+
+* Python 2/3:  [dataintegrityfingerprint-python](https://github.com/expyriment/dataintegrityfingerprint-python)
+* R:  [dataintegrityfingerprint-r](https://github.com/expyriment/dataintegrityfingerprint-r)
+* A DIF can be also created with pre-existing tools of UNIX(-like) operating systems ([see here](posix.md)). 
+
+
+Oliver Lindemann (oliver@expyriment.org) & Florian Krause (florian@expyriment.org)
