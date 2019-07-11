@@ -50,5 +50,5 @@ based on SHA-256 is equivalent to:
 ```
 cd <DATA_FOLDER>
 export LC_ALL=C
-find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///' | shasum -a 256 | cut -d' ' -f1 | sed -e 's/^/SHA-256\//'
+find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///' | shasum -a 256 | cut -d' ' -f1 | sed -e 's/^/sha256\./'
 ```
