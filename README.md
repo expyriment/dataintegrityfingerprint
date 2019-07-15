@@ -16,9 +16,9 @@ Available Implementations
 DIF procedure
 -------------
 
-1. Choose a (cryptographic) hash function `Hash` (e.g. "SHA-256"); it's
-   official name, converted to lower case with nonalphanumeric symbols
-   removed (e.g. "sha256"), shall be referred to as `PREFIX`
+1. Choose a (cryptographic) hash function `Hash` (e.g. "SHA-256") and let
+   `PREFIX` be it's official name, converted to lower case letters with
+   nonalphanumeric symbols removed (e.g. "sha256")
 
 2. For every file `f` in the parent directory of the data:
 
@@ -49,7 +49,7 @@ DIF procedure
 On a Unix(-like) system with a UTF-8 locale, the procedure to create a DIF
 based on SHA-256 is equivalent to:
 ```
-cd <DATA_FOLDER>
+cd <DATA_DIRECTORY>
 export LC_ALL=C
 find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///' | \
 shasum -a 256 | cut -d' ' -f1 | sed -e 's/^/sha256\./'
