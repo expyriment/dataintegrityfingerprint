@@ -20,7 +20,7 @@ DIF procedure
    `PREFIX` be it's official name, converted to lower case letters with
    nonalphanumeric symbols removed (e.g. "sha256")
 
-2. For every file `f` in the parent directory of the data:
+2. For every file `f` in the (potentially nested) directory structure below the parent directory of the data:
 
     a. Calculate `h` as the hexadecimal digest (lower case letters) of
        `Hash(f)` (i.e. the hashed _contents_ of `f`)
