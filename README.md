@@ -20,20 +20,20 @@ DIF procedure
    `PREFIX` be it's official name, converted to lower case letters with
    nonalphanumeric symbols removed (e.g. "sha256")
 
-2. For every file `f` in the (potentially nested) directory structure below the parent directory of the data:
+2. For every file `f` in the (potentially nested) directory structure below the
+   parent directory of the data:
 
-    * Calculate `h` as the hexadecimal digest (lower case letters) of
-      `Hash(f)` (i.e. the hashed _contents_ of `f`)
+    * Calculate `h` as the hexadecimal digest (lower case letters) of `Hash(f)`
+      (i.e. the hashed _contents_ of `f`)
        
-    * Calculate `p` as the relative path in Unix notation (i.e. U+002F
-      forward slash character as separator) to `f` from the parent directory
+    * Calculate `p` as the relative path in Unix notation (i.e. U+002F slash
+      character as separator) to `f` from the parent directory
 
-    * Append `h  p` (i.e., `h` followed by two U+0020
-      whitespace characters followed by `p`) as an independent line
-      (U+000A line feed only, no U+000D carriage return) to a UTF-8-encoded
-      file `checksums` (characters in `p` that cannot be encoded with
-      UTF-8 shall be replaced with a U+003F question mark character;
-      `checksums` shall have no empty lines)
+    * Append `h  p` (i.e., `h` followed by two U+0020 space characters followed
+      by `p`) as an independent line (U+000A line feed only, no U+000D carriage
+      return) to a UTF-8-encoded file `checksums` (characters in `p` that
+      cannot be encoded with UTF-8 shall be replaced with a U+003F question
+      mark character; `checksums` shall have no empty lines)
 
 3. Sort the lines in `checksums` in ascending Unicode code point order (i.e.,
    byte-wise sorting, NOT based on the Unicode collation algorithm)
