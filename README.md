@@ -41,8 +41,8 @@ DIF procedure
 4. Calculate `POSTFIX` as the hexadecimal digest of `Hash(checksums)` (i.e the
    hashed _contents_ of sorted `checksums`)
 
-6. Retrieve the DIF of the dataset as `PREFIX.POSTFIX` (i.e. `PREFIX` followed
-   by a U+002E dot character followed by `POSTFIX`)
+6. Retrieve the DIF of the dataset as `PREFIX_POSTFIX` (i.e. `PREFIX` followed
+   by a U+005F underscore character followed by `POSTFIX`)
 
 
 ### Note
@@ -52,5 +52,5 @@ based on SHA-256 is equivalent to:
 cd <DATA_DIRECTORY>
 export LC_ALL=C
 find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///' | \
-shasum -a 256 | cut -d' ' -f1 | sed -e 's/^/sha256\./'
+shasum -a 256 | cut -d' ' -f1 | sed -e 's/^/sha256\_/'
 ```
