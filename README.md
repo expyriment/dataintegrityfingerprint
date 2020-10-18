@@ -15,7 +15,7 @@ Introduction
 How can we link a journal article unmistakably and indefinitely to an open data set (without relying on storage providers or other services that need to be maintained)?
 
 **Solution:**  
-We publish a unique and human readable fingerprint of the data set in the journal article (allowing a reader with the data to calculate that fingerprint themselves and compare it to what is published in the article)!
+We publish a unique and human-readable fingerprint of the data set in the journal article (allowing a reader with the data to calculate that fingerprint themselves and compare it to what is published in the article)!
 
 Procedure for calculating the DIF of a data set
 -----------------------------------------------
