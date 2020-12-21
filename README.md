@@ -44,7 +44,7 @@ Procedure for calculating the DIF of a data set
 
 
 ### Note
-On a GNU/Linux system with a UTF-8 locale, the procedure to create the SHA-256 Data Integrity Fingerprint (DIF [SHA-256]) is equivalent to:
+On a GNU/Linux system with a UTF-8 locale, the procedure to create the SHA-256 DIF is equivalent to:
 ```
 cd <DATA_SET_ROOT_DIRECTORY>
 export LC_ALL=C
