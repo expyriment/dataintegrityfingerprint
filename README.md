@@ -20,27 +20,23 @@ We publish a unique and human-readable fingerprint of the data set in the journa
 Procedure for calculating the DIF of a data set
 -----------------------------------------------
 
-1. Choose a (cryptographic) hash function `Hash` (e.g. SHA-256)
+1. Choose a (cryptographic) hash function (e.g. SHA-256) as `Hash`
 
-2. For every file `f` in the (potentially nested) subtree under the data set root directory:
+2.  For every file `f` in the (potentially nested) subtree under the dataset root directory,
 
-    * Calculate `h` as the hexadecimal digest (lower case letters) of `Hash(f)`
-      (i.e. the hashed _contents_ of `f`)
-       
-    * Calculate `p` as the relative path in Unix notation (i.e. U+002F slash
-      character as separator) from the data set root directory to `f`
+    * calculate the hexadecimal digest (lower case letters) of `Hash(f)` (i.e. the hashed _binary contents_ of the file) as `h`
 
-    * Append `h  p` (i.e., `h` followed by two U+0020 space characters followed
-      by `p`) as an independent line (ending with U+000A line feed only, no
-      U+000D carriage return) to a UTF-8-encoded file `checksums` (characters
-      in `p` that cannot be encoded with UTF-8 shall be replaced with a U+003F
-      question mark character; `checksums` shall have no empty lines)
+    * get the UTF-8 encoded relative path in Unix notation (i.e. U+002F slash character as separator) from the dataset root directory to `f` as `p`
 
-3. Sort the lines in `checksums` in ascending Unicode code point order (i.e.,
-   byte-wise sorting, NOT based on the Unicode collation algorithm)
+    * create the string `hp` (i.e the concatenation of `h` and `p`)
+    
+    * add `hp` to a list `l`
 
-4. Retrieve the DIF as the hexadecimal digest of `Hash(checksums)` (i.e the
-   hashed _contents_ of sorted `checksums`)
+3. Sort `l` in ascending Unicode code point order (i.e., byte- wise sorting, NOT based on the Unicode collation algorithm)
+
+4. Create the string `l[0]l[1]...l[n]` (i.e. the concatenation of all elements of `l`)
+
+5. Retrieve the DIF as the hexadecimal digest of `Hash(l[0]l[1]...l[n])`
 
 
 ### Note
@@ -48,7 +44,7 @@ On a GNU/Linux system with a UTF-8 locale, the procedure to create the SHA-256 D
 ```
 cd <DATA_SET_ROOT_DIRECTORY>
 export LC_ALL=C
-find . -type f -print0 | xargs -0 shasum -a 256 | sort | sed 's/\.\///' | shasum -a 256 | cut -d' ' -f1
+find . -type f -print0 | xargs -0 shasum -a 256 | cut -c-64,69- | sort | tr -d '\n' | shasum -a 256 | cut -c-64
 ```
 
 Available implementations
