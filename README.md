@@ -52,3 +52,7 @@ Available implementations
 
 * Python 3:  [dataintegrityfingerprint-python](https://github.com/expyriment/dataintegrityfingerprint-python)
 * R:  [dataintegrityfingerprint-r](https://github.com/expyriment/dataintegrityfingerprint-r)
+
+Example data
+------------
+Custom implementations may be tested against [example data](https://github.com/expyriment/DIF/tree/master/example_data) to verify correctness.
