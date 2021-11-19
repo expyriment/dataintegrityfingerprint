@@ -50,7 +50,7 @@ find . -type f -print0 | xargs -0 shasum -a 256 | cut -c-64,69- | sort | tr -d '
 Available implementations
 -------------------------
 
-* Python 3:  [dataintegrityfingerprint-python](https://github.com/expyriment/dataintegrityfingerprint-python)
+* Python (reference implementation):  [dataintegrityfingerprint-python](https://github.com/expyriment/dataintegrityfingerprint-python)
 * R:  [dataintegrityfingerprint-r](https://github.com/expyriment/dataintegrityfingerprint-r)
 
 Example data
