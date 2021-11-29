@@ -18,8 +18,8 @@ The author calculates checksums of all the files in the dataset the article rela
 
 ![DIF_Procedure_Flowchart](https://user-images.githubusercontent.com/2971539/143914028-ea2b8570-6db4-4f82-9bec-b1770fda7df8.png)
 
-Procedure for calculating the DIF of a data set
------------------------------------------------
+Procedure for calculating the DIF of a dataset
+----------------------------------------------
 
 1. Choose a (cryptographic) hash function (e.g. SHA-256) as `Hash`
 
@@ -43,7 +43,7 @@ Procedure for calculating the DIF of a data set
 ### Note
 On a GNU/Linux system with a UTF-8 locale, the procedure to create the SHA-256 DIF is equivalent to:
 ```
-cd <DATA_SET_ROOT_DIRECTORY>
+cd <DATASET_ROOT_DIRECTORY>
 export LC_ALL=C
 find . -type f -print0 | xargs -0 shasum -a 256 | cut -c-64,69- | sort | tr -d '\n' | shasum -a 256 | cut -c-64
 ```
