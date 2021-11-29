@@ -1,8 +1,7 @@
 Data Integrity Fingerprint (DIF)
 ================================
 
-**A proposal for a (printable) fingerprint of scientific data sets that allows
-verifying their integrity**
+**A proposal for a human-readable fingerprint of scientific datasets that allows verifying their integrity**
 
 *Released under the MIT License*
 
@@ -12,10 +11,12 @@ Introduction
 ------------
 
 **Problem:**  
-How can we link a journal article unmistakably and indefinitely to an open data set (without relying on storage providers or other services that need to be maintained)?
+How can we link a journal article unmistakably and indefinitely to a related open dataset (without relying on storage providers or other services that need to be maintained)?
 
 **Solution:**  
-We publish a unique and human-readable fingerprint of the data set in the journal article (allowing a reader with the data to calculate that fingerprint themselves and compare it to what is published in the article)!
+The author calculates checksums of all the files in the dataset the article relates to. From these checksums the author calculates the _Data Integrity Fingerprint (DIF)_ - a single "master checksum" that uniquly identifies the entire dataset. The author reports the DIF in the journal article. A reader of the journal article who obtained a copy of the dataset (from either the author or any other source) calculates the DIF of their copy of the dataset and compares it to the correct DIF as stated in the article. Optionally, in case of a mismatch, the reader can use the additionally obtained list of checksums of individual files to investigate in detail the differences between the datasets.
+
+![DIF_Procedure_Flowchart](https://user-images.githubusercontent.com/2971539/143914028-ea2b8570-6db4-4f82-9bec-b1770fda7df8.png)
 
 Procedure for calculating the DIF of a data set
 -----------------------------------------------
