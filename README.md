@@ -53,7 +53,7 @@ Available implementations
 -------------------------
 
 * Python (reference implementation):  [dataintegrityfingerprint-python](https://github.com/expyriment/dataintegrityfingerprint-python)
-* R:  [dataintegrityfingerprint-r](https://github.com/expyriment/dataintegrityfingerprint-r)
+
 
 Example data
 ------------
