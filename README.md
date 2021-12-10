@@ -7,8 +7,8 @@ Data Integrity Fingerprint (DIF)
 
 Oliver Lindemann (oliver@expyriment.org) & Florian Krause (florian@expyriment.org)
 
-Introduction
-------------
+
+## Introduction
 
 **Problem:**  
 How can we link a journal article unmistakably and indefinitely to a related (open) dataset, without relying on storage providers or other services that need to be maintained?
@@ -18,8 +18,7 @@ The author calculates checksums of all the files in the dataset the article rela
 
 ![DIF_Procedure_Flowchart](https://user-images.githubusercontent.com/2971539/143914028-ea2b8570-6db4-4f82-9bec-b1770fda7df8.png)
 
-Procedure for calculating the DIF of a dataset
-----------------------------------------------
+## Procedure for calculating the DIF of a dataset
 
 1. Choose a (cryptographic) hash function `Hash` (e.g. SHA-256)
 
@@ -43,6 +42,8 @@ Optionally, checksums of individual files and their file paths can be saved as a
 
 
 ### Note
+
+
 On a GNU/Linux system with a UTF-8 locale, the procedure to create the SHA-256 DIF is equivalent to:
 ```
 cd <DATASET_ROOT_DIRECTORY>
@@ -50,12 +51,20 @@ export LC_ALL=C
 find . -type f -print0 | xargs -0 shasum -a 256 | cut -c-64,69- | sort | tr -d '\n' | shasum -a 256 | cut -c-64
 ```
 
-Available implementations
--------------------------
+## Available implementations
 
 * Python (reference implementation):  [dataintegrityfingerprint-python](https://github.com/expyriment/dataintegrityfingerprint-python)
+* further implementations coming soon
 
 
-Example data
-------------
+## Example data
+
 Custom implementations may be tested against [example data](https://github.com/expyriment/DIF/tree/master/example_data) to verify correctness.
+
+---
+
+## Discussion
+
+For comments and remarks about this proposal, please use the [issue tracker](https://github.com/expyriment/DIF/issues) of our [Github repository](https://github.com/expyriment/DIF/).
+
+
