@@ -65,6 +65,6 @@ Custom implementations may be tested against [example data](https://github.com/e
 
 ## Discussion
 
-For comments and remarks about this proposal, please use the [issue tracker](https://github.com/expyriment/DIF/issues) of our [Github repository](https://github.com/expyriment/DIF/).
+For comments and remarks about this proposal, please use the [Discussions forum](https://github.com/expyriment/DIF/discussions) of our [Github repository](https://github.com/expyriment/DIF/).
 
 
