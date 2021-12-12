@@ -22,7 +22,7 @@ The author calculates checksums of all the files in the dataset the article rela
 
 1. Choose a (cryptographic) hash function `Hash` (e.g. SHA-256)
 
-2.  For every file `f` in the (potentially nested) subtree under the dataset root directory,
+2.  For every file `f` in the (potentially nested) subtree under the dataset root directory (with symbolic links being followed),
 
     * calculate the checksum `c` as the hexadecimal digest (lower case letters) of `Hash(f)` (i.e. the hashed _binary contents_ of the file)
 
@@ -48,7 +48,7 @@ On a GNU/Linux system with a UTF-8 locale, the procedure to create the SHA-256 D
 ```
 cd <DATASET_ROOT_DIRECTORY>
 export LC_ALL=C
-find . -type f -print0 | xargs -0 shasum -a 256 | cut -c-64,69- | sort | tr -d '\n' | shasum -a 256 | cut -c-64
+find -L . -type f -print0 | xargs -0 shasum -a 256 | sed 's/^\\*//;s/\\\\*/\\/' | cut -c-64,69- | sort | tr -d '\n' | shasum -a 256 | cut -c-64
 ```
 
 ## Available implementations
