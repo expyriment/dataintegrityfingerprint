@@ -7,7 +7,8 @@ Data Integrity Fingerprint (DIF)
 
 Oliver Lindemann (oliver@expyriment.org) & Florian Krause (florian@expyriment.org)
 
-*Released under the MIT License*
+*This work is licensed under the Creative Commons Attribution - NonDerivative License 4.0 License 
+([CC BY-ND](http://creativecommons.org/licenses/by-nd/4.0/))*.
 
 
 ## Introduction
@@ -66,4 +67,7 @@ Custom implementations may be tested against [example data](https://github.com/e
 
 For comments and remarks about this proposal, please use the [Discussions forum](https://github.com/expyriment/dataintegrityfingerprint/discussions) of our [Github repository](https://github.com/expyriment/dataintegrityfingerprint/).
 
+---
+
+![](https://licensebuttons.net/l/by-nd/4.0/88x31.png)
 
