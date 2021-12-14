@@ -3,9 +3,11 @@ Data Integrity Fingerprint (DIF)
 
 **A proposal for a human-readable fingerprint of scientific datasets that allows verifying their integrity**
 
-*Released under the MIT License*
+*Date*: 12 December 2021
 
 Oliver Lindemann (oliver@expyriment.org) & Florian Krause (florian@expyriment.org)
+
+*Released under the MIT License*
 
 
 ## Introduction
@@ -40,28 +42,25 @@ The author calculates checksums of all the files in the dataset the article rela
 
 Optionally, checksums of individual files and their file paths can be saved as a checksums file with lines of `c␣␣p` for each `f` (i.e. `c` followed by two U+0020 whitespace characters followed by `p`).
 
-
-### Note
-
-
-On a GNU/Linux system with a UTF-8 locale, the procedure to create the SHA-256 DIF is equivalent to:
-```
-cd <DATASET_ROOT_DIRECTORY>
-export LC_ALL=C
-find -L . -type f -print0 | xargs -0 shasum -a 256 | sed 's/^\\*//;s/\\\\*/\\/' | cut -c-64,69- | sort | tr -d '\n' | shasum -a 256 | cut -c-64
-```
+---
 
 ## Available implementations
 
 * Python (reference implementation):  [dataintegrityfingerprint-python](https://github.com/expyriment/dataintegrityfingerprint-python)
 * further implementations coming soon
 
+**Note**: On a GNU/Linux system with a UTF-8 locale, the procedure to create the SHA-256 DIF is equivalent to:
+```
+cd <DATASET_ROOT_DIRECTORY>
+export LC_ALL=C
+find -L . -type f -print0 | xargs -0 shasum -a 256 | sed 's/^\\*//;s/\\\\*/\\/' | cut -c-64,69- | sort | tr -d '\n' | shasum -a 256 | cut -c-64
+```
+
 
 ## Example data
 
 Custom implementations may be tested against [example data](https://github.com/expyriment/DIF/tree/master/example_data) to verify correctness.
 
----
 
 ## Discussion
 
