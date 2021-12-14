@@ -59,11 +59,11 @@ find -L . -type f -print0 | xargs -0 shasum -a 256 | sed 's/^\\*//;s/\\\\*/\\/' 
 
 ## Example data
 
-Custom implementations may be tested against [example data](https://github.com/expyriment/DIF/tree/master/example_data) to verify correctness.
+Custom implementations may be tested against [example data](https://github.com/expyriment/dataintegrityfingerprint/tree/master/example_data) to verify correctness.
 
 
 ## Discussion
 
-For comments and remarks about this proposal, please use the [Discussions forum](https://github.com/expyriment/DIF/discussions) of our [Github repository](https://github.com/expyriment/DIF/).
+For comments and remarks about this proposal, please use the [Discussions forum](https://github.com/expyriment/dataintegrityfingerprint/discussions) of our [Github repository](https://github.com/expyriment/dataintegrityfingerprint/).
 
 
