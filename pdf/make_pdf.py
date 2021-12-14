@@ -40,7 +40,10 @@ if __name__ == "__main__":
     # make temporary md file to render in pandoc
     with  NamedTemporaryFile(mode ='w+', delete=False) as tmpfl:
         tmpfl.write(HEADER)
-        tmpfl.writelines(a[REMOVE_LINES:])
+        for l in a[REMOVE_LINES:]:
+            if l.startswith("## Procedure"):
+                tmpfl.write("\\newpage\n\n")
+            tmpfl.write(l)
 
     # make pdf
     cmd = [PANDOC, tmpfl.name, "-o", OUT_PDF] + PANDOC_OPTIONS
