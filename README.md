@@ -54,7 +54,8 @@ Optionally, checksums of individual files and their file paths can be saved as a
 ```
 cd <DATASET_ROOT_DIRECTORY>
 export LC_ALL=C
-find -L . -type f -print0 | xargs -0 shasum -a 256 | sed 's/^\\*//;s/\\\\*/\\/' | cut -c-64,69- | sort | tr -d '\n' | shasum -a 256 | cut -c-64
+find -L . -type f -print0 | xargs -0 shasum -a 256 | sed 's/^\\*//;s/\\\\*/\\/' |\
+            cut -c-64,69- | sort | tr -d '\n' | shasum -a 256 | cut -c-64
 ```
 
 
