@@ -32,7 +32,6 @@ if __name__ == "__main__":
     try:
         fl = open(sys.argv[1], "r")
     except:
-        print(os.path.abspath(sys.argv[1]))
         raise RuntimeError("Please specify README.md file")
 
     a = fl.readlines()
